@@ -1,24 +1,23 @@
 {
-  "name": "douban-top250-crawler",
+  "name": "douban-top250-crawler-simple",
   "version": "1.0.0",
   "private": true,
-  "description": "豆瓣读书 Top250 TypeScript 爬虫与 pandas 数据清洗分析示例",
+  "description": "豆瓣读书 Top250 TypeScript 爬虫与 pandas 清洗的简化版",
   "scripts": {
     "build": "tsc -p tsconfig.json",
-    "clean": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true})\"",
-    "test": "npm run build && node --test dist/tests/*.test.js",
-    "fetch:test": "npm run build && node dist/src/fetch-check.js",
-    "crawl": "npm run build && node dist/src/cli.js",
-    "analyze": "python3 analysis/clean_analyze.py",
-    "pipeline": "npm run crawl && npm run analyze",
+    "test": "npm run build && node --test dist/tests/crawler.test.js",
+    "crawl": "npm run build && node dist/src/index.js crawl",
+    "fetch:test": "npm run build && node dist/src/index.js fetch-test",
+    "analyze": "python3 clean_analyze.py",
     "test:python": "python3 -m unittest discover -s tests -p 'test_*.py'",
-    "test:all": "npm test && npm run test:python"
+    "test:all": "npm test && npm run test:python",
+    "pipeline": "npm run crawl && npm run analyze"
   },
   "engines": {
     "node": ">=18.17"
   },
   "dependencies": {
-    "cheerio": "^1.0.0-rc.12"
+    "cheerio": "1.0.0-rc.12"
   },
   "devDependencies": {
     "@types/node": "^18.19.130",
