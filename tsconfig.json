@@ -10,6 +10,6 @@
     "skipLibCheck": true,
     "types": ["node"]
   },
-  "include": ["src/**/*.ts", "tests/**/*.ts"],
+  "include": ["crawler.ts"],
   "exclude": ["node_modules", "dist"]
 }

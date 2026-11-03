@@ -2,15 +2,12 @@
   "name": "douban-top250-crawler-simple",
   "version": "1.0.0",
   "private": true,
-  "description": "豆瓣读书 Top250 TypeScript 爬虫与 pandas 清洗的简化版",
+  "description": "豆瓣读书 Top250 TypeScript 爬虫与 pandas 清洗最简版",
   "scripts": {
     "build": "tsc -p tsconfig.json",
-    "test": "npm run build && node --test dist/tests/crawler.test.js",
-    "crawl": "npm run build && node dist/src/index.js crawl",
-    "fetch:test": "npm run build && node dist/src/index.js fetch-test",
-    "analyze": "python3 clean_analyze.py",
-    "test:python": "python3 -m unittest discover -s tests -p 'test_*.py'",
-    "test:all": "npm test && npm run test:python",
+    "crawl": "npm run build && node dist/crawler.js crawl",
+    "fetch:test": "npm run build && node dist/crawler.js fetch-test",
+    "analyze": "python3 clean.py",
     "pipeline": "npm run crawl && npm run analyze"
   },
   "engines": {

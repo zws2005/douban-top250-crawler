@@ -1,20 +1,17 @@
-# 豆瓣读书 Top250 爬虫（简化版）
+# 豆瓣读书 Top250 爬虫（最简版）
 
-单文件 TypeScript 爬虫 + pandas 清洗分析，适合课程提交和快速阅读。
+一个 TypeScript 爬虫文件和一个 Python 清洗脚本，完成抓取、原始 CSV、清洗 CSV 和分析报告。
 
 ## 项目结构
 
 ```text
 douban-top250-crawler-simple/
-├── src/index.ts          # 请求、解析、抓取、CSV、命令行
-├── tests/
-│   ├── crawler.test.ts
-│   └── test_clean_analyze.py
+├── crawler.ts          # 请求、解析、抓取、CSV、命令行
+├── clean.py            # pandas 清洗与分析
 ├── data/
 │   ├── raw_books.csv
 │   └── clean_books.csv
-├── clean_analyze.py      # pandas 清洗与分析
-├── report.md             # 分析报告
+├── report.md
 ├── package.json
 ├── tsconfig.json
 ├── requirements.txt
@@ -25,16 +22,19 @@ douban-top250-crawler-simple/
 
 ```bash
 npm install
-npm run test:all
 npm run fetch:test
 npm run crawl
 npm run analyze
 ```
 
-也可以一次完成抓取和分析：
+或者一次完成抓取和分析：
 
 ```bash
 npm run pipeline
 ```
 
-抓取结果保存到 `data/raw_books.csv`，清洗结果保存到 `data/clean_books.csv`，分析报告保存到 `report.md`。
+输出文件：
+
+- `data/raw_books.csv`：原始抓取结果
+- `data/clean_books.csv`：清洗后的数据
+- `report.md`：分析报告
