@@ -18,14 +18,22 @@ douban-top250-crawler-simple/
 └── README.md
 ```
 
-## 运行
+## 环境要求
+
+- Node.js >= 18.17
+- Python >= 3.10
+- pandas >= 2.0
+
+## 首次运行
 
 ```bash
-npm install
+npm ci
+python3 -m pip install -r requirements.txt
 npm run fetch:test
-npm run crawl
-npm run analyze
+npm run pipeline
 ```
+
+如果系统中已经安装 pandas，可以跳过 pip 安装。之后只需要执行 `npm run pipeline`。
 
 或者一次完成抓取和分析：
 
