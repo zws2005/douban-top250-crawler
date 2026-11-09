@@ -208,6 +208,87 @@ AgentLoop
 
 未来加入流式调用后，建议保持 `complete()` 作为非流式基线，同时增加 `stream()`，避免破坏现有 Provider 和测试。
 
+## 内部文件依赖图
+
+### LLM 包内部依赖
+
+```mermaid
+graph TD
+  README["README.md<br/>文档"] -.说明.-> IDX
+  IDX["index.ts<br/>公共出口"] --> TYPES["types.ts<br/>公共类型"]
+  IDX --> DEEPSEEK["deepseek.ts<br/>DeepSeek 适配器"]
+  IDX --> DEMO["demo.ts<br/>Demo 适配器"]
+  DEEPSEEK --> TYPES
+  DEMO --> TYPES
+```
+
+依赖方向：
+
+```text
+types.ts
+  ↑
+  ├── deepseek.ts
+  └── demo.ts
+        ↑
+      index.ts
+```
+
+- `types.ts` 是最底层，不依赖同包其他文件。
+- `deepseek.ts` 和 `demo.ts` 只依赖 `types.ts`，两者互不依赖。
+- `index.ts` 只负责统一导出，不包含业务逻辑。
+- `README.md` 不参与编译和运行时依赖。
+
+### Core 跨模块依赖
+
+```mermaid
+graph TD
+  LLM_TYPES["core/llm/types.ts"]
+  LLM_INDEX["core/llm/index.ts"]
+  DEEPSEEK["core/llm/deepseek.ts"]
+  DEMO["core/llm/demo.ts"]
+  AGENT_TYPES["core/agent/types.ts"]
+  AGENT_TOOLS["core/agent/tools.ts"]
+  SESSION_TYPES["core/session/types.ts"]
+  AGENT_LOOP["core/agent-loop/index.ts"]
+  AGENT_CLI["agent-cli.ts"]
+
+  LLM_INDEX --> LLM_TYPES
+  LLM_INDEX --> DEEPSEEK
+  LLM_INDEX --> DEMO
+  DEEPSEEK --> LLM_TYPES
+  DEMO --> LLM_TYPES
+  AGENT_TYPES --> LLM_TYPES
+  AGENT_TOOLS --> LLM_TYPES
+  SESSION_TYPES --> LLM_TYPES
+  AGENT_LOOP --> LLM_INDEX
+  AGENT_LOOP --> LLM_TYPES
+  AGENT_CLI --> LLM_INDEX
+```
+
+依赖方向：
+
+```text
+                ┌── agent/types.ts ───┐
+                ├── agent/tools.ts ───┤
+                ├── session/types.ts ─┼──→ core/llm/types.ts
+                └── agent-loop ───────┘
+                         │
+                         └──────────────→ core/llm/index.ts
+                                               │
+                              ┌────────────────┼────────────────┐
+                              ↓                ↓                ↓
+                         types.ts         deepseek.ts        demo.ts
+```
+
+### 分层规则
+
+1. `core/llm/types.ts` 是最底层类型模块。
+2. `deepseek.ts` 和 `demo.ts` 是同级适配器，不能互相依赖。
+3. `core/llm/index.ts` 只做公共导出。
+4. `agent`、`session`、`agent-loop` 可以依赖 LLM 类型或 Provider 抽象。
+5. LLM 层不能反向依赖 `agent`、`session` 或 `agent-loop`，否则会形成循环依赖。
+6. 外部代码优先从 `core/llm/index.ts` 导入；内部只使用类型时可直接导入 `core/llm/types.ts`，避免引入运行时依赖。
+
 ## 设计约束
 
 - 公共接口只暴露内部需要的消息、工具和响应结构。
