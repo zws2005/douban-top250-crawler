@@ -6,7 +6,7 @@ import path from "node:path";
 import test from "node:test";
 import { AgentLoop } from "../src/core/agent-loop";
 import { ToolRegistry } from "../src/core/agent";
-import { SessionLog, deriveMessages, deriveToolHistory } from "../src/core/session";
+import { SessionLog } from "../src/core/session";
 import type { LlmProvider, LlmRequest, LlmResponse } from "../src/core/llm";
 
 class MockProvider implements LlmProvider {
@@ -58,8 +58,6 @@ test("agent loop runs model -> tool -> model and persists a session", async () =
         "turn/end"
       ]
     );
-    assert.equal(deriveMessages(result.session.records).length, 4);
-    assert.equal(deriveToolHistory(result.session.records)[0]?.result?.isError, false);
   } finally {
     await rm(directory, { recursive: true, force: true });
   }
@@ -75,12 +73,24 @@ test("unknown tools are returned as error results instead of crashing", async ()
   assert.match(result.content, /Unknown tool/);
 });
 
-test("sessions can fork and repair interrupted turns", () => {
-  const session = new SessionLog({ cwd: "/tmp" });
-  session.append({ type: "turn/start", turnId: "turn-1", input: "hello" });
-  const fork = session.fork();
-  assert.notEqual(fork.id, session.id);
-  assert.ok(fork.records.some((record) => record.type === "session/forked"));
-  assert.equal(session.repair(), 2);
-  assert.equal(session.records.at(-1)?.type, "session/repaired");
+test("session persists core events", async () => {
+  const directory = await mkdtemp(path.join(tmpdir(), "dsh-session-test-"));
+  try {
+    const session = new SessionLog({ cwd: "/tmp" });
+    session.append({ type: "turn/start", turnId: "turn-1", input: "hello" });
+    session.append({
+      type: "turn/end",
+      turnId: "turn-1",
+      output: "ok",
+      steps: 1
+    });
+    const file = await session.persist(directory);
+    assert.ok(existsSync(file));
+    assert.deepEqual(
+      session.records.map((record) => record.type),
+      ["session/created", "turn/start", "turn/end"]
+    );
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
 });

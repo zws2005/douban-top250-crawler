@@ -1,15 +1,20 @@
+import { randomUUID } from "node:crypto";
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
-import type { ChatMessage } from "../llm/types";
-import { forkSessionRecords } from "./fork";
-import { isKnownEventType } from "./known-event-types";
-import { createSessionHeader, type SessionPrepareOptions } from "./preparation";
-import { repairSessionRecords } from "./repair";
-import { deriveMessages } from "./surface";
 import type { SessionEventPayload, SessionHeader, SessionRecord } from "./types";
 
-export interface SessionLogOptions extends SessionPrepareOptions {
+export interface SessionLogOptions {
+  id?: string;
+  cwd?: string;
   onEvent?: (record: SessionRecord) => void;
+}
+
+function createSessionHeader(options: SessionLogOptions): SessionHeader {
+  return {
+    id: options.id ?? randomUUID(),
+    createdAt: new Date().toISOString(),
+    cwd: options.cwd ?? process.cwd()
+  };
 }
 
 export class SessionLog {
@@ -28,34 +33,10 @@ export class SessionLog {
   }
 
   append(event: SessionEventPayload): SessionRecord {
-    if (!isKnownEventType(event.type)) {
-      throw new Error(`unknown session event: ${event.type}`);
-    }
     const record = { ...event, at: new Date().toISOString() } as SessionRecord;
     this.records.push(record);
     this.onEvent?.(record);
     return record;
-  }
-
-  deriveMessages(): ChatMessage[] {
-    return deriveMessages(this.records);
-  }
-
-  fork(): SessionLog {
-    const child = new SessionLog({
-      cwd: this.header.cwd,
-      request: this.header.request,
-      onEvent: this.onEvent
-    });
-    for (const event of forkSessionRecords(this.records)) child.append(event);
-    child.append({ type: "session/forked", from: this.id });
-    return child;
-  }
-
-  repair(): number {
-    const repairs = repairSessionRecords(this.records);
-    for (const event of repairs) this.append(event);
-    return repairs.length;
   }
 
   async persist(
@@ -73,10 +54,3 @@ export class SessionLog {
 }
 
 export * from "./types";
-export * from "./known-event-types";
-export * from "./request-header";
-export * from "./preparation";
-export * from "./surface";
-export * from "./tool-history";
-export * from "./fork";
-export * from "./repair";

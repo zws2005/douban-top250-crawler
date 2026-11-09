@@ -101,6 +101,18 @@ export DEEPSEEK_MODEL="deepseek-chat"
 
 每次 Agent 运行都会保存会话事件到 `data/agent-sessions/<session-id>.jsonl`。来源和许可证说明见 `src/core/NOTICE.md`。
 
+## 模块文档
+
+`docs/llm/` 提供 Core 各模块的最简使用示例：
+
+- `docs/llm/agent.md`
+- `docs/llm/agent-loop.md`
+- `docs/llm/deepseek.md`
+- `docs/llm/demo.md`
+- `docs/llm/session.md`
+- `docs/llm/scope.md`
+- `docs/llm/attachment.md`
+
 ## 输出文件
 
 | 文件 | 说明 |
@@ -188,7 +200,7 @@ npm run test:all
 │       ├── agent-loop/   # Agent 循环与爬虫工具
 │       ├── llm/          # DeepSeek / Demo Provider
 │       ├── scope/        # 作用域
-│       └── session/      # SessionLog 与事件面
+│       └── session/      # SessionLog 与事件日志
 ├── tests/
 │   ├── parser.test.ts
 │   └── harness.test.ts
