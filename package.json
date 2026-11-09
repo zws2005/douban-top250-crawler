@@ -9,10 +9,15 @@
     "test": "npm run build && node --test dist/tests/*.test.js",
     "fetch:test": "npm run build && node dist/src/fetch-check.js",
     "crawl": "npm run build && node dist/src/cli.js",
-    "analyze": "python3 analysis/clean_analyze.py",
+    "analyze": "bash analysis/run_analysis.sh",
     "pipeline": "npm run crawl && npm run analyze",
-    "test:python": "python3 -m unittest discover -s tests -p 'test_*.py'",
-    "test:all": "npm test && npm run test:python"
+    "test:python": "bash analysis/run_python.sh -m unittest discover -s tests -p 'test_*.py'",
+    "test:all": "npm test && npm run test:python",
+    "agent": "npm run build && node dist/src/agent-cli.js",
+    "agent:demo": "npm run build && node dist/src/agent-cli.js --demo",
+    "recommend": "bash analysis/run_python.sh analysis/recommend.py",
+    "dashboard": "bash analysis/run_python.sh dashboard/generate_dashboard.py",
+    "dashboard:serve": "bash analysis/run_python.sh -m http.server 8000 --directory dashboard"
   },
   "engines": {
     "node": ">=18.17"
@@ -23,5 +28,20 @@
   "devDependencies": {
     "@types/node": "^18.19.130",
     "typescript": "^5.9.3"
-  }
+  },
+  "main": "index.js",
+  "directories": {
+    "test": "tests"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/zws2005/douban-top250-crawler.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/zws2005/douban-top250-crawler/issues"
+  },
+  "homepage": "https://github.com/zws2005/douban-top250-crawler#readme"
 }

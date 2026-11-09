@@ -132,6 +132,9 @@ class CleanAnalyzeIntegrationTest(unittest.TestCase):
             self.assertIn("invalid_rating_count_imputed", flags)
             self.assertIn("missing_rank", flags)
             self.assertTrue((analysis_dir / "report.md").exists())
+            self.assertTrue((analysis_dir / "figures" / "rating_distribution.png").exists())
+            self.assertTrue((analysis_dir / "figures" / "publisher_distribution.png").exists())
+            self.assertTrue((analysis_dir / "figures" / "rating_vs_reviews.png").exists())
 
             summary = json.loads((analysis_dir / "summary.json").read_text(encoding="utf-8"))
             self.assertEqual(summary["original_rows"], 5)

@@ -5,12 +5,22 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
 import pandas as pd
+
+try:
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+    from matplotlib import font_manager
+except ImportError:
+    plt = None
+    font_manager = None
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_INPUT = PROJECT_ROOT / "data" / "raw_books.csv"
@@ -168,11 +178,131 @@ def as_native(value: Any) -> Any:
     return str(value)
 
 
+def generate_figures(
+    clean: pd.DataFrame,
+    distribution: pd.DataFrame,
+    publisher_stats: pd.DataFrame,
+    figures_dir: Path,
+) -> dict[str, Path]:
+    """Regenerate all analysis charts from the latest cleaned dataset."""
+    if plt is None or font_manager is None:
+        print("警告: 未安装 matplotlib，跳过图表生成")
+        return {}
+
+    available = {font.name for font in font_manager.fontManager.ttflist}
+    for name in [
+        "Noto Sans CJK SC",
+        "WenQuanYi Micro Hei",
+        "Microsoft YaHei",
+        "SimHei",
+        "DejaVu Sans",
+    ]:
+        if name in available:
+            plt.rcParams["font.sans-serif"] = [name]
+            break
+    plt.rcParams["axes.unicode_minus"] = False
+
+    figures_dir.mkdir(parents=True, exist_ok=True)
+    outputs: dict[str, Path] = {}
+
+    fig, ax = plt.subplots(figsize=(9, 4.6))
+    colors = ["#94A3B8", "#93C5FD", "#60A5FA", "#2563EB", "#1E3A8A"]
+    bars = ax.bar(
+        distribution["rating_band"].astype(str),
+        distribution["book_count"],
+        color=colors[: len(distribution)],
+        width=0.62,
+    )
+    for bar, value in zip(bars, distribution["book_count"]):
+        ax.text(
+            bar.get_x() + bar.get_width() / 2,
+            value + 2,
+            str(int(value)),
+            ha="center",
+            va="bottom",
+            fontsize=11,
+        )
+    ax.set_title("豆瓣读书 Top250 评分区间分布", fontsize=16, fontweight="bold", pad=12)
+    ax.set_xlabel("评分区间")
+    ax.set_ylabel("图书数量")
+    ax.set_ylim(0, max(1, int(distribution["book_count"].max())) * 1.18)
+    ax.grid(axis="y", linestyle="--", alpha=0.25)
+    ax.spines[["top", "right"]].set_visible(False)
+    fig.tight_layout()
+    rating_path = figures_dir / "rating_distribution.png"
+    fig.savefig(rating_path, dpi=220, bbox_inches="tight", facecolor="white")
+    plt.close(fig)
+    outputs["rating_distribution"] = rating_path
+
+    publisher_plot = publisher_stats.head(10).sort_values("book_count")
+    fig, ax = plt.subplots(figsize=(9, 5.2))
+    bars = ax.barh(
+        publisher_plot["publisher"],
+        publisher_plot["book_count"],
+        color="#0EA5E9",
+        height=0.62,
+    )
+    for bar, value in zip(bars, publisher_plot["book_count"]):
+        ax.text(
+            value + 0.4,
+            bar.get_y() + bar.get_height() / 2,
+            str(int(value)),
+            va="center",
+            fontsize=10,
+        )
+    ax.set_title("入榜图书数量最多的出版社", fontsize=16, fontweight="bold", pad=12)
+    ax.set_xlabel("入榜图书数量")
+    ax.set_xlim(0, max(1, int(publisher_plot["book_count"].max())) * 1.15)
+    ax.grid(axis="x", linestyle="--", alpha=0.25)
+    ax.spines[["top", "right"]].set_visible(False)
+    fig.tight_layout()
+    publisher_path = figures_dir / "publisher_distribution.png"
+    fig.savefig(publisher_path, dpi=220, bbox_inches="tight", facecolor="white")
+    plt.close(fig)
+    outputs["publisher_distribution"] = publisher_path
+
+    fig, ax = plt.subplots(figsize=(9, 4.8))
+    ax.scatter(
+        clean["rating"],
+        clean["rating_count"],
+        s=38,
+        alpha=0.72,
+        c=clean["rating_count"],
+        cmap="Blues",
+        edgecolors="white",
+        linewidths=0.5,
+    )
+    ax.set_yscale("log")
+    ax.set_title("评分与评价人数的关系（对数纵轴）", fontsize=16, fontweight="bold", pad=12)
+    ax.set_xlabel("评分")
+    ax.set_ylabel("评价人数（对数）")
+    ax.grid(True, which="major", linestyle="--", alpha=0.22)
+    ax.spines[["top", "right"]].set_visible(False)
+    correlation = clean["rating"].corr(clean["rating_count"])
+    ax.text(
+        0.02,
+        0.96,
+        f"Pearson r = {correlation:.3f}",
+        transform=ax.transAxes,
+        va="top",
+        fontsize=11,
+        bbox=dict(boxstyle="round,pad=0.35", facecolor="#F8FAFC", edgecolor="#CBD5E1"),
+    )
+    fig.tight_layout()
+    scatter_path = figures_dir / "rating_vs_reviews.png"
+    fig.savefig(scatter_path, dpi=220, bbox_inches="tight", facecolor="white")
+    plt.close(fig)
+    outputs["rating_vs_reviews"] = scatter_path
+
+    return outputs
+
+
 def main() -> None:
     args = parse_args()
     input_path = args.input.resolve()
     clean_output = args.clean_output.resolve()
     analysis_dir = args.analysis_dir.resolve()
+    figures_dir = (args.figures_dir if args.figures_dir is not None else analysis_dir / "figures").resolve()
 
     if not input_path.exists():
         raise SystemExit(f"原始数据不存在: {input_path}\n请先运行 npm run crawl")
@@ -303,6 +433,8 @@ def main() -> None:
         .head(10)
     )
 
+    figures = {} if args.skip_figures else generate_figures(clean, distribution, publisher_stats, figures_dir)
+
     top_books.to_csv(analysis_dir / "top_books.csv", index=False, encoding="utf-8-sig")
     most_reviewed.to_csv(
         analysis_dir / "most_reviewed_books.csv", index=False, encoding="utf-8-sig"
@@ -425,6 +557,19 @@ def main() -> None:
         except ValueError:
             return str(value)
 
+    figure_section = ""
+    if figures:
+        figures_rel = Path(os.path.relpath(figures_dir, analysis_dir)).as_posix()
+        figure_section = f"""## 7. 分析图表
+
+![评分区间分布]({figures_rel}/rating_distribution.png)
+
+![出版社分布]({figures_rel}/publisher_distribution.png)
+
+![评分与评价人数关系]({figures_rel}/rating_vs_reviews.png)
+
+"""
+
     report = f"""# 豆瓣读书 Top250 数据清洗与分析报告
 
 - 生成时间：{datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC')}
@@ -457,7 +602,7 @@ def main() -> None:
 
 {markdown_table(publisher_report, ['publisher', '入榜图书数'])}
 
-## 7. 分析结论
+{figure_section}## 8. 分析结论
 
 - 清洗后共有 **{len(clean)}** 本图书，平均评分 **{rating_series.mean():.2f}**，评分中位数 **{rating_series.median():.2f}**。
 - 评分最高的是《{summary['top_rated_book']}》，评价人数最多的是《{summary['most_reviewed_book']}》。
@@ -477,6 +622,10 @@ def main() -> None:
     print(f"评分与评价人数相关系数: {'N/A' if pd.isna(correlation) else f'{correlation:.3f}'}")
     print(f"清洗数据: {clean_output}")
     print(f"分析报告: {analysis_dir / 'report.md'}")
+    if figures:
+        print("图表已刷新:")
+        for figure in figures.values():
+            print(f"  {figure}")
 
 
 def parse_args() -> argparse.Namespace:
@@ -488,6 +637,10 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--analysis-dir", type=Path, default=DEFAULT_ANALYSIS_DIR, help="分析结果目录"
     )
+    parser.add_argument(
+        "--figures-dir", type=Path, default=None, help="图表输出目录，默认位于分析结果目录下"
+    )
+    parser.add_argument("--skip-figures", action="store_true", help="跳过图表生成")
     return parser.parse_args()
 
 

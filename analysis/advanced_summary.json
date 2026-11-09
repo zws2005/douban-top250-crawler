@@ -1,0 +1,34 @@
+{
+  "generated_at": "2026-11-05T11:36:38.692665+08:00",
+  "trend": {
+    "snapshot_count": 1,
+    "latest_date": "2026-11-05",
+    "latest_mean_rating": 9.0676,
+    "latest_total_rating_count": 24961681
+  },
+  "text": {
+    "quote_count": 160,
+    "top_words": "历史, 代表作, 生命, 一场, 社会, 文学, 爱情, 孩子, 探索, 不能",
+    "sentiment": {
+      "mean": 0.8747,
+      "positive_share": 0.8938,
+      "negative_share": 0.05,
+      "count": 160
+    },
+    "topic_count": 5,
+    "topic_keywords": [
+      "张郎、不能、完美、完整、核心、北京、最早、探索",
+      "一场、监禁、整个、为了、灾难、史诗、地狱、社会",
+      "孩子、他人、关于、文学、爱情、最深、历程、现实主义",
+      "生命、这么、最终、真的、死亡、出卖、极致、意义",
+      "历史、时代、代表作、社会、月亮、命运、一点、怎样"
+    ]
+  },
+  "dimensions": {
+    "top_country": "中国",
+    "top_genre": "文学",
+    "top_author": "鲁迅"
+  },
+  "recommendation_rows": 1250,
+  "recommendation_file": "analysis/similar_books.csv"
+}

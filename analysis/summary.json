@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-02T09:20:09.766000+00:00",
+  "generated_at": "2026-11-05T03:36:20.824616+00:00",
   "input_file": "/home/hadoop/Downloads/数据爬虫/douban-top250-crawler/data/raw_books.csv",
   "clean_file": "/home/hadoop/Downloads/数据爬虫/douban-top250-crawler/data/clean_books.csv",
   "original_rows": 250,
@@ -15,8 +15,8 @@
   "median_rating": 9.1,
   "min_rating": 8.5,
   "max_rating": 9.7,
-  "total_rating_count": 24954089,
-  "median_rating_count": 57515,
+  "total_rating_count": 24961681,
+  "median_rating_count": 57549,
   "rating_count_correlation": -0.0654,
   "median_price_cny": 35.0,
   "most_common_rating_band": "9.0-9.4",
