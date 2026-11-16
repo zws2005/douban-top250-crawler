@@ -117,12 +117,26 @@ h2 {{ margin:0 0 16px; font-size:23px; }}
 .bar-track {{ height:10px; background:#e8eef8; border-radius:999px; overflow:hidden; }}
 .bar-fill {{ height:100%; background:linear-gradient(90deg,var(--brand2),var(--brand)); border-radius:999px; }}
 table {{ width:100%; border-collapse:collapse; font-size:13px; }}
-th,td {{ padding:10px 8px; border-bottom:1px solid var(--line); text-align:left; vertical-align:top; }}
-th {{ color:var(--muted); font-weight:600; background:#f8fafc; position:sticky; top:50px; }}
+#book-table {{ table-layout:fixed; min-width:1120px; }}
+th,td {{ padding:10px 8px; border-bottom:1px solid var(--line); text-align:left; vertical-align:middle; }}
+th {{ color:var(--muted); font-weight:600; background:#f8fafc; position:sticky; top:0; z-index:3; white-space:nowrap; }}
+#book-table td {{ overflow:hidden; text-overflow:ellipsis; }}
+#book-table .col-rank {{ width:58px; text-align:center; color:var(--muted); }}
+#book-table .col-title {{ width:170px; font-weight:600; }}
+#book-table .col-author {{ width:170px; }}
+#book-table .col-publisher {{ width:170px; }}
+#book-table .col-country {{ width:80px; white-space:nowrap; }}
+#book-table .col-genre {{ width:80px; white-space:nowrap; }}
+#book-table .col-rating {{ width:62px; white-space:nowrap; }}
+#book-table .col-count {{ width:104px; white-space:nowrap; }}
+#book-table .col-quote {{ width:230px; color:#475569; }}
+#book-table a {{ color:var(--brand); text-decoration:none; }}
+#book-table a:hover {{ text-decoration:underline; }}
 tbody tr:hover {{ background:#f8fbff; }}
 input,select {{ padding:10px 12px; border:1px solid #cbd5e1; border-radius:9px; font:inherit; background:white; }}
-.search {{ display:flex; gap:10px; margin-bottom:12px; flex-wrap:wrap; }}
-.search input {{ min-width:260px; flex:1; }}
+.search {{ display:flex; gap:10px; margin-bottom:12px; align-items:center; justify-content:space-between; }}
+.search input {{ min-width:0; flex:1; }}
+#book-count {{ margin-left:auto; white-space:nowrap; }}
 .gallery {{ display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:16px; }}
 .gallery img,.wide-img {{ width:100%; border:1px solid var(--line); border-radius:12px; background:white; }}
 .insight {{ color:var(--muted); line-height:1.8; }}
@@ -175,7 +189,14 @@ input,select {{ padding:10px 12px; border:1px solid #cbd5e1; border-radius:9px; 
       <span class="muted" id="book-count"></span>
     </div>
     <div class="card" style="overflow:auto;max-height:650px">
-      <table><thead><tr><th>排名</th><th>书名</th><th>作者</th><th>出版社</th><th>国家</th><th>题材</th><th>评分</th><th>评价人数</th><th>短评</th></tr></thead><tbody id="book-body"></tbody></table>
+      <table id="book-table">
+        <colgroup>
+          <col class="col-rank"><col class="col-title"><col class="col-author"><col class="col-publisher">
+          <col class="col-country"><col class="col-genre"><col class="col-rating"><col class="col-count"><col class="col-quote">
+        </colgroup>
+        <thead><tr><th>排名</th><th>书名</th><th>作者</th><th>出版社</th><th>国家</th><th>题材</th><th>评分</th><th>评价人数</th><th>短评</th></tr></thead>
+        <tbody id="book-body"></tbody>
+      </table>
     </div>
   </section>
   <section id="recommend">
@@ -223,7 +244,7 @@ function renderBooks(q='') {{
   const needle = q.trim().toLowerCase();
   const rows = books.filter(b => !needle || ['title','author','publisher','country','genre','quote'].some(k=>String(b[k]||'').toLowerCase().includes(needle))).slice(0,80);
   document.getElementById('book-count').textContent = `显示 ${{rows.length}} / ${{books.length}} 本`;
-  bookBody.innerHTML = rows.map(b=>`<tr><td>${{b.rank}}</td><td><a href="${{esc(b.url)}}" target="_blank" rel="noreferrer">${{esc(b.title)}}</a></td><td>${{esc(b.author)}}</td><td>${{esc(b.publisher)}}</td><td>${{esc(b.country)}}</td><td>${{esc(b.genre)}}</td><td>${{Number(b.rating).toFixed(1)}}</td><td>${{fmt(b.rating_count)}}</td><td>${{esc(b.quote)}}</td></tr>`).join('');
+  bookBody.innerHTML = rows.map(b=>`<tr><td class="col-rank">${{b.rank}}</td><td class="col-title"><a href="${{esc(b.url)}}" target="_blank" rel="noreferrer">${{esc(b.title)}}</a></td><td class="col-author">${{esc(b.author)}}</td><td class="col-publisher">${{esc(b.publisher)}}</td><td class="col-country">${{esc(b.country)}}</td><td class="col-genre">${{esc(b.genre)}}</td><td class="col-rating">${{Number(b.rating).toFixed(1)}}</td><td class="col-count">${{fmt(b.rating_count)}}</td><td class="col-quote">${{esc(b.quote)}}</td></tr>`).join('');
 }}
 renderBooks();
 document.getElementById('book-search').addEventListener('input', e => renderBooks(e.target.value));
