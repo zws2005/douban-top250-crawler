@@ -5,7 +5,7 @@ import { promisify } from "node:util";
 import readline from "node:readline";
 
 const execFileAsync = promisify(execFile);
-const ROOT = path.resolve(__dirname, "../../..");
+const ROOT = path.resolve(__dirname, "../../../..");
 
 interface Summary {
   clean_rows?: number;

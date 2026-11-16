@@ -206,7 +206,7 @@ npm run test:all
 ```text
 数据爬虫/douban-top250-crawler/
 ├── src/
-│   ├── app/              # 终端 UI（TUI）
+│   ├── app/tui/          # 终端 UI（TUI）
 │   ├── agent-cli.ts      # 爬虫 Agent 命令行入口
 │   ├── cli.ts            # 爬虫命令行入口
 │   ├── crawler.ts        # 分页抓取与原始 CSV 写出

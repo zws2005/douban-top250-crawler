@@ -1,4 +1,4 @@
-# src/app
+# src/app/tui
 
 这是项目的终端 UI（TUI）入口。
 
