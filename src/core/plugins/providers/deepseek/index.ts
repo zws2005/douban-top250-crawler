@@ -1,6 +1,6 @@
-import type { ToolRegistry, ToolExecutionResult } from "../../agent";
-import type { ChatMessage, ToolCall } from "../../llm";
-import type { SessionLog } from "../../session";
+import type { ToolRegistry, ToolExecutionResult } from "../../../agent";
+import type { ChatMessage, ToolCall } from "../../../llm";
+import type { SessionLog } from "../../../session";
 
 export interface AgentHookMap {
   "before-step": {
@@ -34,3 +34,5 @@ export interface AgentPlugin {
   setup(context: PluginContext): void | Promise<void>;
   dispose?(): void | Promise<void>;
 }
+
+export { PluginRegistry } from "./adapter";

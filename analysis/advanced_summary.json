@@ -1,10 +1,10 @@
 {
-  "generated_at": "2026-11-16T14:36:54.257222+08:00",
+  "generated_at": "2026-11-16T15:15:23.206847+08:00",
   "trend": {
     "snapshot_count": 2,
     "latest_date": "2026-11-16",
     "latest_mean_rating": 9.0708,
-    "latest_total_rating_count": 25020847
+    "latest_total_rating_count": 25021071
   },
   "text": {
     "quote_count": 160,

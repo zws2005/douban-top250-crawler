@@ -227,7 +227,8 @@ npm run test:all
 │       ├── agent/        # Agent 契约与 ToolRegistry
 │       ├── agent-loop/   # Agent 循环与爬虫工具
 │       ├── llm/          # DeepSeek / Demo Provider
-│       ├── plugins/deepseek/ # 插件、Hook 与生命周期管理
+│       ├── plugins/
+│       │   └── providers/deepseek/ # 插件、Hook 与生命周期管理
 │       ├── scope/        # 作用域
 │       └── session/      # SessionLog 与事件日志
 ├── tests/

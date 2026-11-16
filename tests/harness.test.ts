@@ -7,7 +7,7 @@ import test from "node:test";
 import { AgentLoop } from "../src/core/agent-loop";
 import { ToolRegistry } from "../src/core/agent";
 import { SessionLog } from "../src/core/session";
-import type { AgentPlugin } from "../src/core/plugins/deepseek";
+import type { AgentPlugin } from "../src/core/plugins/providers/deepseek";
 import type { LlmProvider, LlmRequest, LlmResponse } from "../src/core/llm";
 
 class MockProvider implements LlmProvider {

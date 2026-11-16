@@ -1,12 +1,12 @@
-import type { ToolRegistry } from "../../agent";
-import type { SessionLog } from "../../session";
+import type { ToolRegistry } from "../../../agent";
+import type { SessionLog } from "../../../session";
 import type {
   AgentHook,
   AgentHookMap,
   AgentHookName,
   AgentPlugin,
   PluginContext
-} from "./types";
+} from ".";
 
 type AnyHook = (payload: unknown) => void | Promise<void>;
 

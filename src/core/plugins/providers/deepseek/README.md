@@ -1,14 +1,13 @@
-# core/plugins/deepseek
+# core/plugins/providers/deepseek
 
-`core/plugins/deepseek` 提供最小插件系统，用于在不修改 AgentLoop 的情况下扩展工具和行为。
+`core/plugins/providers/deepseek` 提供最小插件系统，用于在不修改 AgentLoop 的情况下扩展工具和行为。
 
 ## 文件
 
 | 文件 | 作用 |
 | --- | --- |
-| `types.ts` | 插件、Hook 和 PluginContext 类型 |
-| `registry.ts` | 插件安装、Hook 分发和清理 |
-| `index.ts` | 统一导出 |
+| `index.ts` | 插件、Hook、PluginContext 类型和统一导出 |
+| `adapter.ts` | 插件安装、Hook 分发和清理 |
 | `README.md` | 模块说明 |
 
 ## 插件生命周期
@@ -27,7 +26,7 @@ PluginRegistry.setup(plugins)
 ## 最小插件示例
 
 ```ts
-import type { AgentPlugin } from "../../src/core/plugins/deepseek";
+import type { AgentPlugin } from "../../src/core/plugins/providers/deepseek";
 
 const echoPlugin: AgentPlugin = {
   name: "echo-plugin",

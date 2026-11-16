@@ -2,8 +2,8 @@ import { randomUUID } from "node:crypto";
 import type { ToolExecutionResult, ToolRegistry } from "../agent";
 import type { LlmProvider } from "../llm";
 import type { ChatMessage, ToolCall } from "../llm/types";
-import { PluginRegistry } from "../plugins/deepseek";
-import type { AgentPlugin } from "../plugins/deepseek";
+import { PluginRegistry } from "../plugins/providers/deepseek";
+import type { AgentPlugin } from "../plugins/providers/deepseek";
 import { SessionLog } from "../session";
 import type { SessionRecord } from "../session/types";
 
