@@ -7,6 +7,7 @@ import test from "node:test";
 import { AgentLoop } from "../src/core/agent-loop";
 import { ToolRegistry } from "../src/core/agent";
 import { SessionLog } from "../src/core/session";
+import type { AgentPlugin } from "../src/core/plugins";
 import type { LlmProvider, LlmRequest, LlmResponse } from "../src/core/llm";
 
 class MockProvider implements LlmProvider {
@@ -58,6 +59,50 @@ test("agent loop runs model -> tool -> model and persists a session", async () =
         "turn/end"
       ]
     );
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
+
+test("plugins can register tools and observe lifecycle hooks", async () => {
+  const directory = await mkdtemp(path.join(tmpdir(), "dsh-plugin-test-"));
+  const events: string[] = [];
+  const plugin: AgentPlugin = {
+    name: "echo-plugin",
+    setup(context) {
+      context.tools.register({
+        name: "echo",
+        description: "echo input",
+        parameters: { type: "object", properties: { text: { type: "string" } } },
+        execute(args) {
+          return { echoed: args.text };
+        }
+      });
+      context.on("before-step", ({ step }) => { events.push(`before-step:${step}`); });
+      context.on("after-tool", ({ result }) => { events.push(`after-tool:${result.name}`); });
+      context.on("after-turn", ({ steps }) => { events.push(`after-turn:${steps}`); });
+    },
+    dispose() { events.push("dispose"); }
+  };
+
+  try {
+    const loop = new AgentLoop({
+      provider: new MockProvider(),
+      tools: new ToolRegistry(),
+      plugins: [plugin],
+      maxSteps: 3,
+      sessionDirectory: directory
+    });
+    const result = await loop.run("run plugin echo");
+    assert.equal(result.output, "finished");
+    assert.deepEqual(events, [
+      "before-step:1",
+      "after-tool:echo",
+      "before-step:2",
+      "after-turn:2",
+      "dispose"
+    ]);
   } finally {
     await rm(directory, { recursive: true, force: true });
   }

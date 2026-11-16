@@ -1,7 +1,9 @@
 import { randomUUID } from "node:crypto";
-import type { ToolRegistry } from "../agent";
+import type { ToolExecutionResult, ToolRegistry } from "../agent";
 import type { LlmProvider } from "../llm";
 import type { ChatMessage, ToolCall } from "../llm/types";
+import { PluginRegistry } from "../plugins";
+import type { AgentPlugin } from "../plugins";
 import { SessionLog } from "../session";
 import type { SessionRecord } from "../session/types";
 
@@ -12,6 +14,7 @@ export interface AgentLoopOptions {
   maxSteps?: number;
   sessionDirectory?: string;
   onEvent?: (record: SessionRecord) => void;
+  plugins?: readonly AgentPlugin[];
 }
 
 export interface AgentRunResult {
@@ -36,6 +39,7 @@ export class AgentLoop {
   private readonly maxSteps: number;
   private readonly sessionDirectory?: string;
   private readonly onEvent?: (record: SessionRecord) => void;
+  private readonly plugins: readonly AgentPlugin[];
 
   constructor(options: AgentLoopOptions) {
     this.provider = options.provider;
@@ -44,6 +48,7 @@ export class AgentLoop {
     this.maxSteps = Math.max(1, options.maxSteps ?? 8);
     this.sessionDirectory = options.sessionDirectory;
     this.onEvent = options.onEvent;
+    this.plugins = options.plugins ?? [];
   }
 
   async run(
@@ -52,6 +57,7 @@ export class AgentLoop {
   ): Promise<AgentRunResult> {
     const turnId = randomUUID();
     const session = new SessionLog({ cwd: process.cwd(), onEvent: this.onEvent });
+    const plugins = new PluginRegistry(session, this.tools);
     const messages: ChatMessage[] = [
       { role: "system", content: this.systemPrompt },
       { role: "user", content: input }
@@ -60,34 +66,43 @@ export class AgentLoop {
     session.append({ type: "turn/start", turnId, input });
     session.append({ type: "user/message", message: messages[1]! });
 
-    for (let step = 1; step <= this.maxSteps; step += 1) {
-      if (signal.aborted) throw new Error("agent run cancelled");
+    try {
+      await plugins.setup(this.plugins);
 
-      const response = await this.provider.complete({
-        messages,
-        tools: this.tools.schemas(),
-        signal
-      });
-      const assistant: ChatMessage = {
-        role: "assistant",
-        content: response.content,
-        ...(response.toolCalls.length > 0 ? { toolCalls: [...response.toolCalls] } : {})
-      };
-      messages.push(assistant);
-      session.append({ type: "assistant/message", message: assistant });
+      for (let step = 1; step <= this.maxSteps; step += 1) {
+        if (signal.aborted) throw new Error("agent run cancelled");
+        await plugins.emit("before-step", { step, messages });
 
-      if (response.toolCalls.length === 0) {
-        session.append({ type: "turn/end", turnId, output: response.content, steps: step });
-        const logPath = await session.persist(this.sessionDirectory);
-        return { output: response.content, steps: step, session, logPath };
+        const response = await this.provider.complete({
+          messages,
+          tools: this.tools.schemas(),
+          signal
+        });
+        const assistant: ChatMessage = {
+          role: "assistant",
+          content: response.content,
+          ...(response.toolCalls.length > 0 ? { toolCalls: [...response.toolCalls] } : {})
+        };
+        messages.push(assistant);
+        session.append({ type: "assistant/message", message: assistant });
+
+        if (response.toolCalls.length === 0) {
+          session.append({ type: "turn/end", turnId, output: response.content, steps: step });
+          await plugins.emit("after-turn", { output: response.content, steps: step });
+          const logPath = await session.persist(this.sessionDirectory);
+          return { output: response.content, steps: step, session, logPath };
+        }
+
+        for (const call of response.toolCalls) {
+          const result = await this.executeCall(call, session, messages, signal);
+          await plugins.emit("after-tool", { call, result });
+        }
       }
 
-      for (const call of response.toolCalls) {
-        await this.executeCall(call, session, messages, signal);
-      }
+      throw new Error(`agent exceeded maximum steps: ${this.maxSteps}`);
+    } finally {
+      await plugins.dispose();
     }
-
-    throw new Error(`agent exceeded maximum steps: ${this.maxSteps}`);
   }
 
   private async executeCall(
@@ -95,7 +110,7 @@ export class AgentLoop {
     session: SessionLog,
     messages: ChatMessage[],
     signal: AbortSignal
-  ): Promise<void> {
+  ): Promise<ToolExecutionResult> {
     session.append({ type: "tool/call", call });
     const result = await this.tools.execute(call, { sessionId: session.id, signal });
     session.append({ type: "tool/result", result });
@@ -105,5 +120,6 @@ export class AgentLoop {
       toolCallId: call.id,
       name: call.name
     });
+    return result;
   }
 }
