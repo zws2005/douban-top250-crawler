@@ -1,5 +1,5 @@
-import type { ToolRegistry } from "../agent";
-import type { SessionLog } from "../session";
+import type { ToolRegistry } from "../../agent";
+import type { SessionLog } from "../../session";
 import type {
   AgentHook,
   AgentHookMap,

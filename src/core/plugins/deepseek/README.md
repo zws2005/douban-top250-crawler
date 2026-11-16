@@ -1,6 +1,6 @@
-# core/plugins
+# core/plugins/deepseek
 
-`core/plugins` 提供最小插件系统，用于在不修改 AgentLoop 的情况下扩展工具和行为。
+`core/plugins/deepseek` 提供最小插件系统，用于在不修改 AgentLoop 的情况下扩展工具和行为。
 
 ## 文件
 
@@ -27,7 +27,7 @@ PluginRegistry.setup(plugins)
 ## 最小插件示例
 
 ```ts
-import type { AgentPlugin } from "../../src/core/plugins";
+import type { AgentPlugin } from "../../src/core/plugins/deepseek";
 
 const echoPlugin: AgentPlugin = {
   name: "echo-plugin",
