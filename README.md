@@ -111,9 +111,19 @@ npm run agent:demo
 使用阿里云百炼模型运行：
 
 ```bash
+cp .env.example .env
+# 编辑 .env，填写 DASHSCOPE_API_KEY
+npm run agent -- "抓取豆瓣 Top250 前 2 页，保存原始数据并分析"
+```
+
+也可以直接使用环境变量：
+
+```bash
 export DASHSCOPE_API_KEY="你的百炼 API Key"
 npm run agent -- "抓取豆瓣 Top250 前 2 页，保存原始数据并分析"
 ```
+
+`.env` 已被 `.gitignore` 忽略，不会提交 API Key；`.env.example` 提供可提交的字段模板。
 
 默认百炼模型是 `qwen-plus`，可以指定：
 
@@ -231,6 +241,7 @@ npm run test:all
 │   ├── sources/          # CrawlSource 数据源适配器
 │   ├── app/
 │   │   ├── config.ts      # 应用配置
+│   │   ├── env.ts         # .env 读取
 │   │   ├── index.ts       # 应用启动入口
 │   │   ├── prompt.ts      # Agent 提示词
 │   │   ├── runtime.ts     # 运行时控制

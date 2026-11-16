@@ -20,7 +20,14 @@ const response = await provider.complete({
 console.log(response.content);
 ```
 
-运行前设置 API Key：
+运行前设置 API Key，可以写入项目根目录的 `.env`：
+
+```bash
+cp .env.example .env
+# 编辑 .env
+```
+
+或直接使用环境变量：
 
 ```bash
 export DASHSCOPE_API_KEY="你的百炼 API Key"

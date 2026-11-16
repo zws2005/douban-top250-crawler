@@ -1,27 +1,27 @@
 {
-  "generated_at": "2026-11-16T15:15:23.206847+08:00",
+  "generated_at": "2026-11-16T17:04:24.303158+08:00",
   "trend": {
     "snapshot_count": 2,
     "latest_date": "2026-11-16",
-    "latest_mean_rating": 9.0708,
-    "latest_total_rating_count": 25021071
+    "latest_mean_rating": 9.232,
+    "latest_total_rating_count": 10926320
   },
   "text": {
-    "quote_count": 160,
-    "top_words": "历史, 代表作, 生命, 一场, 社会, 文学, 爱情, 孩子, 探索, 不能",
+    "quote_count": 44,
+    "top_words": "社会, 出卖, 文学, 代表作, 爱情, 历史, 为了, 未来, 灵魂, 一点",
     "sentiment": {
-      "mean": 0.8747,
-      "positive_share": 0.8938,
-      "negative_share": 0.05,
-      "count": 160
+      "mean": 0.8765,
+      "positive_share": 0.8636,
+      "negative_share": 0.0455,
+      "count": 44
     },
     "topic_count": 5,
     "topic_keywords": [
-      "北京、张郎、爱情、时期、完整、完美、核心、探索",
-      "生命、一场、不能、这么、整个、为了、灾难、为什么",
-      "孩子、他人、最深、历程、量子、教育、探索、困惑",
-      "监禁、最终、死亡、出卖、科幻小说、意义、绝唱、生与死",
-      "历史、代表作、文学、社会、时代、月亮、命运、一点"
+      "出卖、文学、东西、原则、遵循、良心、不能、从众",
+      "一点、未来、生与死、爱者、过去、野草、献于友、作证",
+      "社会、代表作、研究、传统、理论、结构、文化、乡土",
+      "历史、爱情、命运、变局、背后、个人、核心、义无反顾",
+      "灵魂、为了、生命、整个、低俗、提升、斗争、地位"
     ]
   },
   "dimensions": {
@@ -29,6 +29,6 @@
     "top_genre": "文学",
     "top_author": "鲁迅"
   },
-  "recommendation_rows": 1250,
+  "recommendation_rows": 250,
   "recommendation_file": "analysis/similar_books.csv"
 }

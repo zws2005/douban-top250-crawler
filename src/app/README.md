@@ -5,6 +5,7 @@
 ```text
 src/app/
 ├── config.ts     # 环境变量与项目路径
+├── env.ts        # .env 文件读取
 ├── index.ts      # 应用启动入口
 ├── prompt.ts     # Agent 系统提示词与默认任务
 ├── runtime.ts    # 摘要读取、npm 脚本执行、追踪

@@ -2,6 +2,7 @@ import { AgentLoop } from "./core/agent-loop";
 import { createCrawlerTools } from "./core/agent-loop/crawler-tools";
 import { selectProvider } from "./core/llm";
 import { CRAWLER_AGENT_SYSTEM_PROMPT, DEFAULT_AGENT_TASK } from "./app/prompt";
+import { loadEnvFile } from "./app/env";
 
 interface AgentCliOptions {
   task: string;
@@ -40,6 +41,7 @@ function parseArgs(args: string[]): AgentCliOptions {
 }
 
 async function main(): Promise<void> {
+  loadEnvFile();
   const options = parseArgs(process.argv.slice(2));
   const provider = selectProvider({
     demo: options.demo,

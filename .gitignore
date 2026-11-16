@@ -9,3 +9,4 @@ data/app-traces/
 
 .env
 .env.*
+!.env.example

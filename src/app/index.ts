@@ -1,6 +1,8 @@
+import { loadEnvFile } from "./env";
 import { AppRuntime } from "./runtime";
 import { Tui } from "./tui";
 
+loadEnvFile();
 const runtime = new AppRuntime();
 const tui = new Tui(runtime);
 
