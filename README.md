@@ -22,6 +22,9 @@ npm run test:all
 # 真实网页 fetch 测试（访问第一页并验证解析结果）
 npm run fetch:test
 
+# 启动终端 UI（TUI）
+npm run tui
+
 # 抓取全部 10 页，共 250 条，默认页间隔 1.5 秒
 npm run crawl
 
@@ -67,6 +70,24 @@ npm run crawl -- --pages 2 --delay-ms 2000
 npm run crawl -- --pages 10 --output data/raw_books.csv
 npm run crawl -- --help
 ```
+
+## 终端 UI（TUI）
+
+执行：
+
+```bash
+npm run tui
+```
+
+TUI 提供交互式菜单：
+
+- 抓取 Top250
+- 清洗与分析
+- 完整 pipeline
+- 离线 Agent 演示
+- 查看最新数据摘要
+
+TUI 通过子进程调用现有 npm 脚本，不改变数据流程。按 `q` 退出。
 
 ## 爬虫 Agent（DeepSeek Harness Core 精简版）
 
@@ -185,6 +206,7 @@ npm run test:all
 ```text
 数据爬虫/douban-top250-crawler/
 ├── src/
+│   ├── app/              # 终端 UI（TUI）
 │   ├── agent-cli.ts      # 爬虫 Agent 命令行入口
 │   ├── cli.ts            # 爬虫命令行入口
 │   ├── crawler.ts        # 分页抓取与原始 CSV 写出

@@ -17,7 +17,8 @@
     "agent:demo": "npm run build && node dist/src/agent-cli.js --demo",
     "recommend": "bash analysis/run_python.sh analysis/recommend.py",
     "dashboard": "bash analysis/run_python.sh dashboard/generate_dashboard.py",
-    "dashboard:serve": "bash analysis/run_python.sh -m http.server 8000 --directory dashboard"
+    "dashboard:serve": "bash analysis/run_python.sh -m http.server 8000 --directory dashboard",
+    "tui": "npm run build && node dist/src/app/index.js"
   },
   "engines": {
     "node": ">=18.17"
