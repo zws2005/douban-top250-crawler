@@ -97,7 +97,9 @@ TUI 通过子进程调用现有 npm 脚本，不改变数据流程。按 `q` 退
 - `ToolRegistry`：工具注册、Schema 和统一错误处理
 - `AgentLoop`：模型调用、工具调用、结果回填和最大步数限制
 - `LlmProvider`：可替换的模型提供方接口
+- 阿里云百炼 Provider：兼容 DashScope OpenAI Compatible API
 - DeepSeek Provider：兼容 DeepSeek Chat Completions API
+- `selectProvider()`：按环境变量或 `--provider` 自动选择模型
 - 默认工具：`fetch_top250_page`、`crawl_top250`、`read_books_csv`、`analyze_books`
 
 无 API Key 时运行离线演示（只抓取第一页，不修改数据）：
@@ -106,11 +108,31 @@ TUI 通过子进程调用现有 npm 脚本，不改变数据流程。按 `q` 退
 npm run agent:demo
 ```
 
-使用 DeepSeek 模型运行：
+使用阿里云百炼模型运行：
 
 ```bash
-export DEEPSEEK_API_KEY="你的 API Key"
+export DASHSCOPE_API_KEY="你的百炼 API Key"
 npm run agent -- "抓取豆瓣 Top250 前 2 页，保存原始数据并分析"
+```
+
+默认百炼模型是 `qwen-plus`，可以指定：
+
+```bash
+export DASHSCOPE_MODEL="qwen-plus"
+npm run agent -- --provider bailian --model qwen-plus "抓取前两页并分析"
+```
+
+继续使用 DeepSeek：
+
+```bash
+export DEEPSEEK_API_KEY="你的 DeepSeek API Key"
+npm run agent -- --provider deepseek "抓取豆瓣 Top250 前 2 页并分析"
+```
+
+无 API Key 时自动使用 Demo Provider；也可以显式指定：
+
+```bash
+npm run agent -- --provider demo "抓取第一页"
 ```
 
 可选环境变量：

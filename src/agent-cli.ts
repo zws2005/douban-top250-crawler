@@ -1,16 +1,51 @@
 import { AgentLoop } from "./core/agent-loop";
 import { createCrawlerTools } from "./core/agent-loop/crawler-tools";
-import { DeepSeekProvider, DemoCrawlerProvider } from "./core/llm";
-import type { LlmProvider } from "./core/llm";
+import { selectProvider } from "./core/llm";
 import { CRAWLER_AGENT_SYSTEM_PROMPT, DEFAULT_AGENT_TASK } from "./app/prompt";
 
+interface AgentCliOptions {
+  task: string;
+  demo: boolean;
+  provider?: string;
+  model?: string;
+}
+
+function parseArgs(args: string[]): AgentCliOptions {
+  let demo = false;
+  let provider: string | undefined;
+  let model: string | undefined;
+  const task: string[] = [];
+
+  for (let index = 0; index < args.length; index += 1) {
+    const arg = args[index];
+    if (arg === "--demo") {
+      demo = true;
+    } else if (arg === "--provider") {
+      provider = args[index + 1];
+      index += 1;
+    } else if (arg === "--model") {
+      model = args[index + 1];
+      index += 1;
+    } else {
+      task.push(arg);
+    }
+  }
+
+  return {
+    task: task.join(" ").trim() || DEFAULT_AGENT_TASK,
+    demo,
+    provider,
+    model
+  };
+}
+
 async function main(): Promise<void> {
-  const args = process.argv.slice(2);
-  const demo = args.includes("--demo");
-  const task = args.filter((arg) => arg !== "--demo").join(" ").trim() || DEFAULT_AGENT_TASK;
-  const apiKey = process.env.DEEPSEEK_API_KEY;
-  const provider: LlmProvider =
-    demo || !apiKey ? new DemoCrawlerProvider() : new DeepSeekProvider({ apiKey });
+  const options = parseArgs(process.argv.slice(2));
+  const provider = selectProvider({
+    demo: options.demo,
+    provider: options.provider,
+    model: options.model
+  });
   const tools = createCrawlerTools();
 
   console.log(`[agent] provider: ${provider.name}`);
@@ -33,7 +68,7 @@ async function main(): Promise<void> {
     }
   });
 
-  const result = await loop.run(task, controller.signal);
+  const result = await loop.run(options.task, controller.signal);
   console.log("\n=== Agent 最终输出 ===");
   console.log(result.output);
   console.log(`\n[agent] steps: ${result.steps}`);

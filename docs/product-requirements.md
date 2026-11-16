@@ -147,7 +147,7 @@
 | FR-30 | P0 | 提供 ToolRegistry、Schema 和统一错误处理 | 已实现 |
 | FR-31 | P0 | 实现模型调用与工具调用的多步循环 | 已实现 |
 | FR-32 | P0 | 支持最大步数、AbortSignal 取消和错误中止 | 已实现 |
-| FR-33 | P0 | 提供 DeepSeek Provider 和离线 Demo Provider | 已实现 |
+| FR-33 | P0 | 提供阿里云百炼、DeepSeek Provider 和离线 Demo Provider | 已实现 |
 | FR-34 | P0 | 提供抓取、批量抓取、CSV 读取和分析工具 | 已实现 |
 | FR-35 | P1 | 提供人工审批、工具预算和写操作审计 | 后续规划 |
 | FR-36 | P1 | 提供流式输出、Inbox steering 和上下文压缩 | 后续规划 |

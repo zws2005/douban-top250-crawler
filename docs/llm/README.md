@@ -6,6 +6,7 @@
 | --- | --- |
 | [agent.md](agent.md) | 工具注册与执行 |
 | [agent-loop.md](agent-loop.md) | Agent 循环 |
+| [bailian.md](bailian.md) | 阿里云百炼 Provider |
 | [deepseek.md](deepseek.md) | DeepSeek Provider |
 | [demo.md](demo.md) | 离线 Demo Provider |
 | [session.md](session.md) | 会话事件日志 |

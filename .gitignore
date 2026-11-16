@@ -6,3 +6,6 @@ __pycache__/
 data/pages/
 data/agent-sessions/
 data/app-traces/
+
+.env
+.env.*

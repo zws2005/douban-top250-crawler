@@ -7,7 +7,10 @@
 | 文件 | 作用 |
 | --- | --- |
 | `types.ts` | 公共消息、工具、请求、响应和 Provider 接口 |
-| `deepseek.ts` | DeepSeek Chat Completions 适配器 |
+| `openai-compatible.ts` | OpenAI Chat Completions 兼容实现 |
+| `deepseek.ts` | DeepSeek 适配器 |
+| `bailian.ts` | 阿里云百炼适配器 |
+| `select-provider.ts` | 按环境变量或参数选择 Provider |
 | `demo.ts` | 无 API Key 的离线演示 Provider |
 | `index.ts` | 统一导出 |
 | `README.md` | 公共接口、适配器注册和流式调用说明 |
@@ -81,6 +84,40 @@ console.log(response.toolCalls);
 DEEPSEEK_API_KEY
 DEEPSEEK_BASE_URL=https://api.deepseek.com
 DEEPSEEK_MODEL=deepseek-chat
+```
+
+
+## 已实现：阿里云百炼 Provider
+
+阿里云百炼通过 DashScope 的 OpenAI Compatible API 调用 Qwen 模型。
+
+```bash
+export DASHSCOPE_API_KEY="你的百炼 API Key"
+npm run agent -- "抓取豆瓣 Top250 前两页并分析"
+```
+
+可选变量：
+
+```bash
+DASHSCOPE_BASE_URL=https://dashscope.aliyuncs.com/compatible-mode/v1
+DASHSCOPE_MODEL=qwen-plus
+```
+
+也兼容 `BAILIAN_API_KEY`、`BAILIAN_BASE_URL` 和 `BAILIAN_MODEL`。
+
+## 已实现：Provider 选择
+
+`selectProvider()` 的优先级：
+
+1. 显式 `--provider`
+2. 存在 `DASHSCOPE_API_KEY` 时选择 `bailian`
+3. 存在 `DEEPSEEK_API_KEY` 时选择 `deepseek`
+4. 否则使用 `demo`
+
+```bash
+npm run agent -- --provider bailian --model qwen-plus "抓取前两页"
+npm run agent -- --provider deepseek "抓取前两页"
+npm run agent -- --provider demo "抓取第一页"
 ```
 
 ## 已实现：离线 Demo Provider
@@ -216,9 +253,17 @@ AgentLoop
 graph TD
   README["README.md<br/>文档"] -.说明.-> IDX
   IDX["index.ts<br/>公共出口"] --> TYPES["types.ts<br/>公共类型"]
+  IDX --> OPENAI["openai-compatible.ts<br/>OpenAI 兼容层"]
   IDX --> DEEPSEEK["deepseek.ts<br/>DeepSeek 适配器"]
+  IDX --> BAILIAN["bailian.ts<br/>百炼适配器"]
+  IDX --> SELECT["select-provider.ts<br/>Provider 选择"]
   IDX --> DEMO["demo.ts<br/>Demo 适配器"]
-  DEEPSEEK --> TYPES
+  OPENAI --> TYPES
+  DEEPSEEK --> OPENAI
+  BAILIAN --> OPENAI
+  SELECT --> DEEPSEEK
+  SELECT --> BAILIAN
+  SELECT --> DEMO
   DEMO --> TYPES
 ```
 
@@ -227,14 +272,21 @@ graph TD
 ```text
 types.ts
   ↑
-  ├── deepseek.ts
+  ├── openai-compatible.ts
+  │     ↑
+  │     ├── deepseek.ts
+  │     └── bailian.ts
   └── demo.ts
+        ↑
+  select-provider.ts
         ↑
       index.ts
 ```
 
 - `types.ts` 是最底层，不依赖同包其他文件。
-- `deepseek.ts` 和 `demo.ts` 只依赖 `types.ts`，两者互不依赖。
+- `deepseek.ts` 和 `bailian.ts` 依赖共享的 `openai-compatible.ts`。
+- `demo.ts` 只依赖 `types.ts`。
+- `select-provider.ts` 依赖三个 Provider，并对外提供统一选择入口。
 - `index.ts` 只负责统一导出，不包含业务逻辑。
 - `README.md` 不参与编译和运行时依赖。
 
