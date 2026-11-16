@@ -206,6 +206,7 @@ npm run test:all
 ```text
 数据爬虫/douban-top250-crawler/
 ├── src/
+│   ├── sources/          # CrawlSource 数据源适配器
 │   ├── app/
 │   │   ├── config.ts      # 应用配置
 │   │   ├── index.ts       # 应用启动入口

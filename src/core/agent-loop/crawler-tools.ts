@@ -3,10 +3,9 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { promisify } from "node:util";
 import { ToolRegistry } from "../agent";
-import { crawlDoubanTop250 } from "../../crawler";
+import { crawlSource } from "../../crawler";
 import { fetchPage } from "../../fetch";
-import { buildTop250Url } from "../../normalize";
-import { parseTop250PageWithStats } from "../../parser";
+import { doubanBooksSource } from "../../sources";
 
 const execFileAsync = promisify(execFile);
 const PROJECT_ROOT = path.resolve(__dirname, "../../../..");
@@ -31,16 +30,16 @@ export function createCrawlerTools(): ToolRegistry {
     },
     async execute(args, context) {
       if (context.signal.aborted) throw new Error("cancelled");
-      const page = numberArg(args.page, 1, 1, 10);
-      const url = buildTop250Url(page - 1);
+      const page = numberArg(args.page, 1, 1, doubanBooksSource.maxPages);
+      const url = doubanBooksSource.buildPageUrl(page - 1);
       const { html } = await fetchPage(url);
-      const parsed = parseTop250PageWithStats(html, (page - 1) * 25);
+      const parsed = doubanBooksSource.parsePage(html, (page - 1) * doubanBooksSource.pageSize);
       return {
         page,
         url,
-        count: parsed.books.length,
+        count: parsed.items.length,
         malformedRows: parsed.malformedRows,
-        sample: parsed.books.slice(0, 5).map((book) => ({
+        sample: parsed.items.slice(0, 5).map((book) => ({
           rank: book.rank,
           title: book.title,
           rating: book.ratingRaw,
@@ -62,15 +61,15 @@ export function createCrawlerTools(): ToolRegistry {
     },
     async execute(args, context) {
       if (context.signal.aborted) throw new Error("cancelled");
-      const result = await crawlDoubanTop250({
-        pages: numberArg(args.pages, 1, 1, 10),
+      const result = await crawlSource(doubanBooksSource, {
+        pages: numberArg(args.pages, 1, 1, doubanBooksSource.maxPages),
         delayMs: numberArg(args.delayMs, 1000, 0, 10000),
         outputPath: path.join(PROJECT_ROOT, "data", "raw_books.csv")
       });
       return {
-        rows: result.books.length,
+        rows: result.items.length,
         outputPath: path.relative(PROJECT_ROOT, result.outputPath),
-        sample: result.books.slice(0, 5).map((book) => ({ rank: book.rank, title: book.title }))
+        sample: result.items.slice(0, 5).map((book) => ({ rank: book.rank, title: book.title }))
       };
     }
   });
