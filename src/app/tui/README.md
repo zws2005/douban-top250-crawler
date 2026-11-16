@@ -1,6 +1,6 @@
 # src/app/tui
 
-这是项目的终端 UI（TUI）入口。
+这是项目的终端 UI（TUI）实现目录。
 
 ```bash
 npm run tui
@@ -14,6 +14,16 @@ TUI 提供：
 - 离线 Agent 演示
 - 查看最新数据摘要
 
-运行操作时使用子进程执行现有 npm 脚本，不会绕过原有爬虫和分析流程。TUI 只负责展示状态和触发命令，不改变数据逻辑。
+目录结构：
+
+```text
+src/app/tui/
+├── index.ts     # 导出 Tui，不直接启动
+├── tui.ts       # 界面、键盘输入和交互状态
+├── README.md    # 使用说明
+└── tui.md       # 模块设计说明
+```
+
+实际启动入口是 `src/app/index.ts`。TUI 通过 `AppRuntime` 调用现有 npm 脚本，不直接实现爬虫和清洗逻辑。
 
 完整的模块职责、依赖图和扩展说明见 [tui.md](tui.md)。

@@ -1,23 +1,6 @@
-import { execFile } from "node:child_process";
-import { readFile } from "node:fs/promises";
-import path from "node:path";
-import { promisify } from "node:util";
 import readline from "node:readline";
-
-const execFileAsync = promisify(execFile);
-const ROOT = path.resolve(__dirname, "../../../..");
-
-interface Summary {
-  clean_rows?: number;
-  mean_rating?: number;
-  median_rating?: number;
-  total_rating_count?: number;
-  median_rating_count?: number;
-  rating_count_correlation?: number | null;
-  top_rated_book?: string;
-  most_reviewed_book?: string;
-  top_publisher?: string;
-}
+import type { AnalysisSummary } from "../runtime";
+import type { AppRuntime } from "../runtime";
 
 interface MenuItem {
   key: string;
@@ -59,20 +42,14 @@ function pad(text: string, width: number): string {
   return text + " ".repeat(Math.max(0, width - visible.length));
 }
 
-async function readSummary(): Promise<Summary | null> {
-  try {
-    return JSON.parse(await readFile(path.join(ROOT, "analysis/summary.json"), "utf8")) as Summary;
-  } catch {
-    return null;
-  }
-}
-
 export class Tui {
-  private summary: Summary | null = null;
+  private summary: AnalysisSummary | null = null;
   private status = "就绪";
   private busy = false;
   private lastOutput: string[] = [];
   private closed = false;
+
+  constructor(private readonly runtime: AppRuntime) {}
 
   async start(): Promise<void> {
     if (!process.stdin.isTTY) {
@@ -100,7 +77,7 @@ export class Tui {
   }
 
   private async refreshSummary(): Promise<void> {
-    this.summary = await readSummary();
+    this.summary = await this.runtime.readSummary();
   }
 
   private render(): void {
@@ -109,7 +86,7 @@ export class Tui {
     const s = this.summary;
     const out: string[] = [ANSI.clear];
     out.push(`${ANSI.bold}${ANSI.blue}  豆瓣读书 Top250 · 爬虫 Agent 控制台${ANSI.reset}`);
-    out.push(`${ANSI.dim}  工作目录: ${ROOT}${ANSI.reset}`);
+    out.push(`${ANSI.dim}  工作目录: ${this.runtime.config.projectRoot}${ANSI.reset}`);
     out.push(line(width));
     out.push(`${ANSI.bold}  数据摘要${ANSI.reset}`);
     if (s) {
@@ -164,11 +141,7 @@ export class Tui {
     this.render();
 
     try {
-      const { stdout, stderr } = await execFileAsync("npm", ["run", script], {
-        cwd: ROOT,
-        maxBuffer: 20 * 1024 * 1024,
-        env: process.env
-      });
+      const { stdout, stderr } = await this.runtime.runScript(script);
       const output = `${stdout}\n${stderr}`.trim().split(/\r?\n/).filter(Boolean);
       this.lastOutput = output.length ? output : ["命令执行完成，无输出"];
       this.status = `完成: npm run ${script}`;

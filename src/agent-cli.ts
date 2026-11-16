@@ -2,13 +2,12 @@ import { AgentLoop } from "./core/agent-loop";
 import { createCrawlerTools } from "./core/agent-loop/crawler-tools";
 import { DeepSeekProvider, DemoCrawlerProvider } from "./core/llm";
 import type { LlmProvider } from "./core/llm";
-
-const DEFAULT_TASK = "抓取豆瓣读书 Top250 第 1 页，并总结前几本书的信息。";
+import { CRAWLER_AGENT_SYSTEM_PROMPT, DEFAULT_AGENT_TASK } from "./app/prompt";
 
 async function main(): Promise<void> {
   const args = process.argv.slice(2);
   const demo = args.includes("--demo");
-  const task = args.filter((arg) => arg !== "--demo").join(" ").trim() || DEFAULT_TASK;
+  const task = args.filter((arg) => arg !== "--demo").join(" ").trim() || DEFAULT_AGENT_TASK;
   const apiKey = process.env.DEEPSEEK_API_KEY;
   const provider: LlmProvider =
     demo || !apiKey ? new DemoCrawlerProvider() : new DeepSeekProvider({ apiKey });
@@ -23,6 +22,7 @@ async function main(): Promise<void> {
   const loop = new AgentLoop({
     provider,
     tools,
+    systemPrompt: CRAWLER_AGENT_SYSTEM_PROMPT,
     maxSteps: 6,
     onEvent: (event) => {
       if (event.type === "tool/call") {

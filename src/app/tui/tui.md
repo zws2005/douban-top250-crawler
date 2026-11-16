@@ -14,32 +14,42 @@
 ## 2. 文件结构
 
 ```text
-src/app/tui/
-├── index.ts     # 启动入口，只负责创建并启动 Tui
-├── tui.ts       # TUI 主逻辑：状态、渲染、键盘输入、命令执行
-├── README.md    # 使用说明
-└── tui.md       # 当前模块说明
+src/app/
+├── config.ts     # 环境变量与路径配置
+├── index.ts      # 应用启动入口
+├── prompt.ts     # Agent 提示词与默认任务
+├── runtime.ts    # 摘要读取和 npm 脚本执行
+├── trace.ts      # JSONL 运行追踪
+└── tui/
+    ├── index.ts  # 导出 Tui
+    ├── tui.ts    # TUI 主逻辑
+    ├── README.md # 使用说明
+    └── tui.md    # 当前模块说明
 ```
 
 ## 3. 依赖关系
 
 ```mermaid
 graph TD
-  INDEX["index.ts<br/>启动入口"] --> TUI["tui.ts<br/>Tui 类"]
+  INDEX["app/index.ts<br/>启动入口"] --> RUNTIME["app/runtime.ts"]
+  INDEX --> TUI["tui/tui.ts<br/>Tui 类"]
+  TUI --> RUNTIME
+  RUNTIME --> CONFIG["app/config.ts"]
+  RUNTIME --> TRACE["app/trace.ts"]
+  RUNTIME --> CHILD["node:child_process<br/>执行 npm 脚本"]
+  RUNTIME --> SUMMARY["analysis/summary.json"]
   TUI --> READLINE["node:readline<br/>键盘输入"]
-  TUI --> CHILD["node:child_process<br/>执行 npm 脚本"]
-  TUI --> FS["node:fs/promises<br/>读取 summary.json"]
-  TUI --> PATH["node:path<br/>项目路径"]
-  TUI --> SUMMARY["analysis/summary.json<br/>数据摘要"]
   TUI --> SCRIPTS["package.json scripts<br/>crawl / analyze / pipeline / agent:demo"]
 ```
 
 依赖方向是单向的：
 
 ```text
-index.ts → tui.ts → Node.js 标准库
-                 → analysis/summary.json
-                 → npm scripts
+app/index.ts → tui/tui.ts → app/runtime.ts
+                         → app/config.ts
+                         → app/trace.ts
+                         → analysis/summary.json
+                         → npm scripts
 ```
 
 `tui.ts` 不直接依赖具体爬虫模块、pandas 脚本或 Agent 内部实现。
@@ -49,8 +59,9 @@ index.ts → tui.ts → Node.js 标准库
 ```text
 npm run tui
   → tsc 编译
-  → node dist/src/app/tui/index.js
-  → new Tui().start()
+  → node dist/src/app/index.js
+  → new AppRuntime()
+  → new Tui(runtime).start()
 ```
 
 `start()` 会执行：
@@ -110,14 +121,16 @@ closed: boolean              // 是否已经退出
 用户按键
   → onKey()
   → 找到 MENU 项
-  → runScript(script)
+  → runtime.runScript(script)
+  → trace/start
   → execFile("npm", ["run", script])
+  → trace/end 或 trace/error
   → 保存 stdout/stderr 最后若干行
   → refreshSummary()
   → render()
 ```
 
-命令使用 `execFile` 而不是 shell 拼接，菜单脚本名来自固定 `MENU` 常量，避免接受任意用户命令。
+命令通过 `AppRuntime` 使用 `execFile` 执行，菜单脚本名来自固定 `MENU` 常量，避免接受任意用户命令。运行追踪写入 `data/app-traces/`。
 
 ## 9. 退出与清理
 
