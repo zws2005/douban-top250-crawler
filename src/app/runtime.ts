@@ -8,7 +8,7 @@ import { selectProvider } from "../core/llm";
 import type { SessionRecord } from "../core/session/types";
 import { WebSearchService, type SearchResponse } from "../core/websearch";
 import { loadConfig, type AppConfig } from "./config";
-import { getAppPresetRegistry } from "./presets";
+import { createAppPresetRegistry } from "./presets";
 import { TraceWriter } from "./trace";
 
 const execFileAsync = promisify(execFile);
@@ -66,7 +66,12 @@ export class AppRuntime {
 
   async runAgent(task: string, onTrace?: AgentTraceHandler): Promise<AgentRunSummary> {
     const provider = selectProvider();
-    const preset = getAppPresetRegistry().get("research");
+    const preset = createAppPresetRegistry({
+      webSearchService: this.webSearch,
+      onWebSearchTrace: (type, data) => {
+        void this.trace.record(type, data);
+      }
+    }).get("research");
     const tools = createCrawlerTools();
     const model =
       provider.name === "bailian"

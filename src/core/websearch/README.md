@@ -67,7 +67,7 @@ websearch/response
 websearch/error
 ```
 
-TUI 按 `7` 或执行 `npm run trace` 可以查看最新 trace 文件前 20 行。
+TUI 按 `7` 或执行 `npm run trace` 可以查看最新 trace 文件最近 20 行。
 
 ## 直接调用
 

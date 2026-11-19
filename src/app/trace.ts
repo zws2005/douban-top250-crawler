@@ -33,7 +33,10 @@ export class TraceWriter {
       const content = await readFile(file, "utf8");
       return {
         file,
-        lines: content.split(/\r?\n/).filter(Boolean).slice(0, Math.max(1, limit))
+        lines: content
+          .split(/\r?\n/)
+          .filter(Boolean)
+          .slice(-Math.max(1, limit))
       };
     } catch {
       return null;

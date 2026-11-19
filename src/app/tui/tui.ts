@@ -21,7 +21,7 @@ const HELP = [
   "/help              显示帮助",
   "/summary           查看数据摘要",
   "/search <关键词>   调用 web_search",
-  "/trace             查看最新 trace 前 20 行",
+  "/trace             查看最新 trace 最近 20 行",
   "/crawl             抓取 Top250",
   "/analyze           清洗、分析、刷新图表和看板",
   "/pipeline          抓取 + 分析",
@@ -244,6 +244,7 @@ export class Tui {
       this.append("");
       this.append(result.output);
       this.append("本轮完成");
+      this.append("输入 /trace 可查看最新 20 条工具 trace。");
       this.status = "就绪";
     } catch (error) {
       this.append(`Agent 失败: ${error instanceof Error ? error.message : String(error)}`);

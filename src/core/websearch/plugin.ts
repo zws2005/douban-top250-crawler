@@ -3,10 +3,12 @@ import { WebSearchService } from "./service";
 
 export interface WebSearchPluginOptions {
   service?: WebSearchService;
+  onTrace?: (type: string, data?: Record<string, unknown>) => void;
 }
 
 export function createWebSearchPlugin(options: WebSearchPluginOptions = {}): AgentPlugin {
   const service = options.service ?? new WebSearchService();
+  const onTrace = options.onTrace;
   return {
     name: "web-search",
     setup(context) {
@@ -25,10 +27,30 @@ export function createWebSearchPlugin(options: WebSearchPluginOptions = {}): Age
           if (execution.signal.aborted) throw new Error("cancelled");
           const query = String(args.query ?? "").trim();
           const maxResults = Number(args.maxResults ?? 5);
-          return service.search(query, {
-            limit: maxResults,
-            signal: execution.signal
-          });
+          const startedAt = Date.now();
+          onTrace?.("websearch/start", { query, limit: maxResults });
+          onTrace?.("websearch/provider", { provider: service.name });
+          onTrace?.("websearch/request", { query, limit: maxResults });
+          try {
+            const response = await service.search(query, {
+              limit: maxResults,
+              signal: execution.signal
+            });
+            onTrace?.("websearch/response", {
+              query,
+              provider: response.provider,
+              results: response.results.length,
+              durationMs: Date.now() - startedAt
+            });
+            return response;
+          } catch (error) {
+            onTrace?.("websearch/error", {
+              query,
+              durationMs: Date.now() - startedAt,
+              message: error instanceof Error ? error.message : String(error)
+            });
+            throw error;
+          }
         }
       });
     }

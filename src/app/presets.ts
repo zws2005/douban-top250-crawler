@@ -1,5 +1,5 @@
 import { PresetRegistry, type AgentPreset } from "../core/presets";
-import { createWebSearchPlugin } from "../core/websearch";
+import { createWebSearchPlugin, type WebSearchService } from "../core/websearch";
 import { CRAWLER_AGENT_SYSTEM_PROMPT, RESEARCH_AGENT_SYSTEM_PROMPT } from "./prompt";
 
 export const crawlerPreset: AgentPreset = {
@@ -18,13 +18,27 @@ export const researchPreset: AgentPreset = {
   plugins: [createWebSearchPlugin()]
 };
 
-export function createAppPresetRegistry(): PresetRegistry {
-  return new PresetRegistry([crawlerPreset, researchPreset]);
+export interface AppPresetOptions {
+  webSearchService?: WebSearchService;
+  onWebSearchTrace?: (type: string, data?: Record<string, unknown>) => void;
+}
+
+export function createAppPresetRegistry(options: AppPresetOptions = {}): PresetRegistry {
+  const research: AgentPreset = {
+    ...researchPreset,
+    plugins: [
+      createWebSearchPlugin({
+        service: options.webSearchService,
+        onTrace: options.onWebSearchTrace
+      })
+    ]
+  };
+  return new PresetRegistry([crawlerPreset, research]);
 }
 
 let cachedRegistry: PresetRegistry | undefined;
 
-export function getAppPresetRegistry(): PresetRegistry {
-  cachedRegistry ??= createAppPresetRegistry();
+export function getAppPresetRegistry(options: AppPresetOptions = {}): PresetRegistry {
+  cachedRegistry ??= createAppPresetRegistry(options);
   return cachedRegistry;
 }

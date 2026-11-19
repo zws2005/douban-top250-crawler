@@ -80,7 +80,7 @@ npm run tui
 | `/help` | 显示帮助 |
 | `/summary` | 刷新并显示数据摘要 |
 | `/search <关键词>` | 直接执行 Web Search |
-| `/trace` | 显示最新 trace 文件前 20 行 |
+| `/trace` | 显示最新 trace 文件最近 20 行 |
 | `/crawl` | 执行 `npm run crawl` |
 | `/analyze` | 执行 `npm run analyze` |
 | `/pipeline` | 执行 `npm run pipeline` |
@@ -126,7 +126,7 @@ websearch/result
 websearch/error
 ```
 
-`/search` 会在会话区显示工具 trace 和结果；`/trace` 显示最新 JSONL trace 文件前 20 行。
+`/search` 会在会话区显示工具 trace 和结果；`/trace` 显示最新 JSONL trace 文件最近 20 行。
 
 ## 9. 状态模型
 

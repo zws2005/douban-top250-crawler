@@ -24,7 +24,7 @@ session: 最近一次 Agent JSONL 路径
 - `/help`：显示命令。
 - `/summary`：查看数据摘要。
 - `/search <关键词>`：直接调用 `web_search`。
-- `/trace`：查看最新 trace 文件前 20 行。
+- `/trace`：查看最新 trace 文件最近 20 行。
 - `/crawl`：抓取 Top250。
 - `/analyze`：清洗、分析和刷新看板。
 - `/pipeline`：抓取 + 分析。
