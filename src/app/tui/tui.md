@@ -36,6 +36,7 @@ graph TD
   TUI --> RUNTIME
   RUNTIME --> CONFIG["app/config.ts"]
   RUNTIME --> TRACE["app/trace.ts"]
+  RUNTIME --> WEBSEARCH["core/websearch"]
   RUNTIME --> CHILD["node:child_process<br/>执行 npm 脚本"]
   RUNTIME --> SUMMARY["analysis/summary.json"]
   TUI --> READLINE["node:readline<br/>键盘输入"]
@@ -96,7 +97,9 @@ TUI 首页分为四个区域：
 | `3` | 执行 `npm run pipeline` |
 | `4` | 执行 `npm run agent:demo` |
 | `5` | 重新读取并显示摘要 |
-| `q` / `Esc` | 退出 TUI |
+| `6` | 输入关键词并执行 `web_search` |
+| `Enter` | 在搜索输入模式下执行搜索 |
+| `q` / `Esc` | 退出 TUI；搜索输入模式下 Esc 返回菜单 |
 | `Ctrl+C` | 强制退出 |
 
 操作执行期间，`busy` 状态会阻止重复触发菜单操作；`Ctrl+C` 仍可退出。

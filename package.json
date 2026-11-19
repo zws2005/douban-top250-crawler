@@ -4,7 +4,7 @@
   "private": true,
   "description": "豆瓣读书 Top250 TypeScript 爬虫与 pandas 数据清洗分析示例",
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "build": "npm run clean && tsc -p tsconfig.json",
     "clean": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true})\"",
     "test": "npm run build && node --test dist/tests/*.test.js",
     "fetch:test": "npm run build && node dist/src/fetch-check.js",
@@ -18,7 +18,8 @@
     "recommend": "bash analysis/run_python.sh analysis/recommend.py",
     "dashboard": "bash analysis/run_python.sh dashboard/generate_dashboard.py",
     "dashboard:serve": "bash analysis/run_python.sh -m http.server 8000 --directory dashboard",
-    "tui": "npm run build && node dist/src/app/index.js"
+    "tui": "npm run build && node dist/src/app/index.js",
+    "search": "npm run build && node dist/src/search-cli.js"
   },
   "engines": {
     "node": ">=18.17"

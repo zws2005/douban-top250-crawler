@@ -86,8 +86,57 @@ TUI 提供交互式菜单：
 - 完整 pipeline
 - 离线 Agent 演示
 - 查看最新数据摘要
+- 联网搜索（输入关键词调用 `web_search`）
 
 TUI 通过子进程调用现有 npm 脚本，不改变数据流程。按 `q` 退出。
+
+## Web Search
+
+项目内置 Web Search 工具，默认使用可免费访问的 Bing HTML 搜索，也支持 DuckDuckGo 和 Tavily。
+
+```bash
+npm run search -- "豆瓣读书 Top250"
+```
+
+Provider 选择规则：
+
+1. `WEB_SEARCH_PROVIDER` 显式指定
+2. 存在 `TAVILY_API_KEY` 时使用 Tavily
+3. 默认使用 Bing
+
+```bash
+export WEB_SEARCH_PROVIDER=bing
+# 或
+export WEB_SEARCH_PROVIDER=duckduckgo
+# 或
+export TAVILY_API_KEY="你的 Tavily Key"
+```
+
+Agent 的 `research` Preset 会自动挂载 `web_search` 工具：
+
+```bash
+npm run agent -- --preset research "搜索豆瓣读书 Top250 的现状并总结"
+```
+
+## Preset 插件管理
+
+`src/core/presets/` 提供最小 Preset Registry。Preset 声明：
+
+- system prompt
+- 插件集合
+- 插件注册的工具和 Hook
+
+当前内置两个 Preset：
+
+- `crawler`：抓取和分析，默认
+- `research`：在爬虫工具之外挂载 `web_search`
+
+```bash
+npm run agent -- --preset crawler "抓取前两页并分析"
+npm run agent -- --preset research "搜索 Top250 最新信息"
+```
+
+实例文档见 `src/core/presets/README.md` 和 `src/core/websearch/README.md`。
 
 ## 爬虫 Agent（DeepSeek Harness Core 精简版）
 
@@ -101,6 +150,7 @@ TUI 通过子进程调用现有 npm 脚本，不改变数据流程。按 `q` 退
 - DeepSeek Provider：兼容 DeepSeek Chat Completions API
 - `selectProvider()`：按环境变量或 `--provider` 自动选择模型
 - 默认工具：`fetch_top250_page`、`crawl_top250`、`read_books_csv`、`analyze_books`
+- 研究 Preset 工具：`web_search`
 
 无 API Key 时运行离线演示（只抓取第一页，不修改数据）：
 
@@ -241,6 +291,7 @@ npm run test:all
 │   ├── sources/          # CrawlSource 数据源适配器
 │   ├── app/
 │   │   ├── config.ts      # 应用配置
+│   │   ├── presets.ts     # crawler / research Preset
 │   │   ├── env.ts         # .env 读取
 │   │   ├── index.ts       # 应用启动入口
 │   │   ├── prompt.ts      # Agent 提示词

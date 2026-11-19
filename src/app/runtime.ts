@@ -2,6 +2,7 @@ import { execFile } from "node:child_process";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { promisify } from "node:util";
+import { WebSearchService, type SearchResponse } from "../core/websearch";
 import { loadConfig, type AppConfig } from "./config";
 import { TraceWriter } from "./trace";
 
@@ -27,6 +28,7 @@ export interface ScriptResult {
 export class AppRuntime {
   readonly config: AppConfig;
   readonly trace: TraceWriter;
+  readonly webSearch = new WebSearchService();
 
   constructor(config = loadConfig()) {
     this.config = config;
@@ -39,6 +41,25 @@ export class AppRuntime {
       return JSON.parse(await readFile(file, "utf8")) as AnalysisSummary;
     } catch {
       return null;
+    }
+  }
+
+  async searchWeb(query: string, limit = 3): Promise<SearchResponse> {
+    await this.trace.record("websearch/start", { query, limit });
+    try {
+      const response = await this.webSearch.search(query, { limit });
+      await this.trace.record("websearch/end", {
+        query,
+        provider: response.provider,
+        results: response.results.length
+      });
+      return response;
+    } catch (error) {
+      await this.trace.record("websearch/error", {
+        query,
+        message: error instanceof Error ? error.message : String(error)
+      });
+      throw error;
     }
   }
 

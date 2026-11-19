@@ -1,20 +1,23 @@
 import { AgentLoop } from "./core/agent-loop";
 import { createCrawlerTools } from "./core/agent-loop/crawler-tools";
 import { selectProvider } from "./core/llm";
-import { CRAWLER_AGENT_SYSTEM_PROMPT, DEFAULT_AGENT_TASK } from "./app/prompt";
+import { DEFAULT_AGENT_TASK } from "./app/prompt";
 import { loadEnvFile } from "./app/env";
+import { getAppPresetRegistry } from "./app/presets";
 
 interface AgentCliOptions {
   task: string;
   demo: boolean;
   provider?: string;
   model?: string;
+  preset?: string;
 }
 
 function parseArgs(args: string[]): AgentCliOptions {
   let demo = false;
   let provider: string | undefined;
   let model: string | undefined;
+  let preset: string | undefined;
   const task: string[] = [];
 
   for (let index = 0; index < args.length; index += 1) {
@@ -27,6 +30,9 @@ function parseArgs(args: string[]): AgentCliOptions {
     } else if (arg === "--model") {
       model = args[index + 1];
       index += 1;
+    } else if (arg === "--preset") {
+      preset = args[index + 1];
+      index += 1;
     } else {
       task.push(arg);
     }
@@ -36,7 +42,8 @@ function parseArgs(args: string[]): AgentCliOptions {
     task: task.join(" ").trim() || DEFAULT_AGENT_TASK,
     demo,
     provider,
-    model
+    model,
+    preset
   };
 }
 
@@ -49,8 +56,10 @@ async function main(): Promise<void> {
     model: options.model
   });
   const tools = createCrawlerTools();
+  const preset = getAppPresetRegistry().get(options.preset ?? "crawler");
 
   console.log(`[agent] provider: ${provider.name}`);
+  console.log(`[agent] preset: ${preset.id}`);
   console.log(`[agent] tools: ${tools.schemas().map((tool) => tool.name).join(", ")}`);
 
   const controller = new AbortController();
@@ -59,7 +68,8 @@ async function main(): Promise<void> {
   const loop = new AgentLoop({
     provider,
     tools,
-    systemPrompt: CRAWLER_AGENT_SYSTEM_PROMPT,
+    systemPrompt: preset.systemPrompt,
+    plugins: preset.plugins,
     maxSteps: 6,
     onEvent: (event) => {
       if (event.type === "tool/call") {

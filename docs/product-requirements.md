@@ -164,6 +164,8 @@
 | FR-42 | P1 | 提供终端 UI，可触发抓取、分析、流水线和 Agent 演示 | 已实现 |
 | FR-43 | P1 | 提供插件系统、生命周期 Hook 和插件清理 | 已实现 |
 | FR-44 | P1 | 提供 CrawlSource 数据源适配器，隔离 URL、解析和输出逻辑 | 已实现 |
+| FR-45 | P1 | 提供 Bing、DuckDuckGo、Tavily Web Search 和 Agent 工具 | 已实现 |
+| FR-46 | P1 | 提供 Preset 注册表、system prompt 和插件组合管理 | 已实现 |
 
 ## 7. 数据需求
 

@@ -7,6 +7,7 @@ interface MenuItem {
   label: string;
   description: string;
   script?: string;
+  action?: "websearch";
 }
 
 const MENU: MenuItem[] = [
@@ -14,7 +15,8 @@ const MENU: MenuItem[] = [
   { key: "2", label: "清洗与分析", description: "刷新 clean CSV、报告、图表和看板", script: "analyze" },
   { key: "3", label: "完整流水线", description: "抓取 + 清洗 + 高级分析 + 看板", script: "pipeline" },
   { key: "4", label: "Agent 演示", description: "运行离线爬虫 Agent，不需要 API Key", script: "agent:demo" },
-  { key: "5", label: "查看摘要", description: "读取 analysis/summary.json", script: undefined }
+  { key: "5", label: "查看摘要", description: "读取 analysis/summary.json", script: undefined },
+  { key: "6", label: "联网搜索", description: "输入关键词并调用 web_search", action: "websearch" }
 ];
 
 const ANSI = {
@@ -48,6 +50,8 @@ export class Tui {
   private busy = false;
   private lastOutput: string[] = [];
   private closed = false;
+  private mode: "menu" | "search" = "menu";
+  private searchInput = "";
 
   constructor(private readonly runtime: AppRuntime) {}
 
@@ -104,11 +108,15 @@ export class Tui {
     out.push(`  ${ANSI.cyan}[q]${ANSI.reset} 退出`);
     out.push(line(width));
     out.push(`  状态: ${this.busy ? ANSI.yellow + "运行中" + ANSI.reset : ANSI.green + this.status + ANSI.reset}`);
-    if (this.lastOutput.length > 0) {
+    if (this.mode === "search") {
+      out.push(`${ANSI.bold}  联网搜索${ANSI.reset}`);
+      out.push(`  关键词: ${this.searchInput}█`);
+      out.push(`${ANSI.dim}  Enter 搜索 · Esc 返回菜单${ANSI.reset}`);
+    } else if (this.lastOutput.length > 0) {
       out.push(`${ANSI.bold}  最近输出${ANSI.reset}`);
       for (const row of this.lastOutput.slice(-10)) out.push(`  ${row.slice(0, width - 4)}`);
     }
-    out.push(`${ANSI.dim}  提示: 操作执行期间不会阻塞终端界面。${ANSI.reset}`);
+    out.push(`${ANSI.dim}  提示: 按 6 输入关键词执行 web_search。${ANSI.reset}`);
     process.stdout.write(out.join("\n") + "\n");
   }
 
@@ -118,12 +126,24 @@ export class Tui {
       return;
     }
     if (this.busy) return;
+    if (this.mode === "search") {
+      await this.onSearchKey(text, key);
+      return;
+    }
     if (text === "q" || key.name === "escape") {
       this.quit();
       return;
     }
     const item = MENU.find((entry) => entry.key === text);
     if (!item) return;
+    if (item.action === "websearch") {
+      this.mode = "search";
+      this.searchInput = "";
+      this.status = "等待输入搜索关键词";
+      this.lastOutput = [];
+      this.render();
+      return;
+    }
     if (!item.script) {
       await this.refreshSummary();
       this.status = "摘要已刷新";
@@ -132,6 +152,58 @@ export class Tui {
       return;
     }
     await this.runScript(item.script);
+  }
+
+  private async onSearchKey(text: string, key: readline.Key): Promise<void> {
+    if (key.name === "escape") {
+      this.mode = "menu";
+      this.status = "就绪";
+      this.render();
+      return;
+    }
+    if (key.name === "return" || key.name === "enter") {
+      const query = this.searchInput.trim();
+      if (query) await this.runWebSearch(query);
+      return;
+    }
+    if (key.name === "backspace") {
+      this.searchInput = this.searchInput.slice(0, -1);
+      this.render();
+      return;
+    }
+    if (text && !key.ctrl && !key.meta && !key.name?.startsWith("f")) {
+      this.searchInput = (this.searchInput + text).slice(0, 100);
+      this.render();
+    }
+  }
+
+  private async runWebSearch(query: string): Promise<void> {
+    this.mode = "menu";
+    this.busy = true;
+    this.status = `搜索: ${query}`;
+    this.lastOutput = [];
+    this.render();
+
+    try {
+      const response = await this.runtime.searchWeb(query, 3);
+      const lines = [`[${response.provider}] ${response.query}`];
+      if (response.answer) lines.push(`回答: ${response.answer}`);
+      response.results.forEach((result, index) => {
+        lines.push(`${index + 1}. ${result.title}`);
+        lines.push(`   ${result.url}`);
+        if (result.snippet) lines.push(`   ${result.snippet}`);
+      });
+      this.lastOutput = lines;
+      this.status = response.results.length
+        ? `搜索完成: ${response.results.length} 条结果`
+        : "搜索完成，但没有结果";
+    } catch (error) {
+      this.lastOutput = [error instanceof Error ? error.message : String(error)];
+      this.status = "搜索失败";
+    } finally {
+      this.busy = false;
+      this.render();
+    }
   }
 
   private async runScript(script: string): Promise<void> {

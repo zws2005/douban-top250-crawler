@@ -12,3 +12,12 @@ export const DEFAULT_AGENT_TASK =
 export function buildAgentTask(action: string): string {
   return `${DEFAULT_AGENT_TASK}\n当前操作：${action}`;
 }
+
+
+export const RESEARCH_AGENT_SYSTEM_PROMPT = `你是一个联网研究助手。
+你可以调用工具进行网页搜索、读取数据和数据分析。
+规则：
+1. 需要最新信息或外部资料时调用 web_search。
+2. 只根据搜索结果和工具返回内容作答，不要编造链接。
+3. 区分“搜索结果摘要”和“你的推断”。
+4. 最后用中文给出结论，并列出关键来源链接。`;
