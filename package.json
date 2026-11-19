@@ -19,7 +19,8 @@
     "dashboard": "bash analysis/run_python.sh dashboard/generate_dashboard.py",
     "dashboard:serve": "bash analysis/run_python.sh -m http.server 8000 --directory dashboard",
     "tui": "npm run build && node dist/src/app/index.js",
-    "search": "npm run build && node dist/src/search-cli.js"
+    "search": "npm run build && node dist/src/search-cli.js",
+    "trace": "npm run build && node dist/src/trace-cli.js"
   },
   "engines": {
     "node": ">=18.17"

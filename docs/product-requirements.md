@@ -166,6 +166,7 @@
 | FR-44 | P1 | 提供 CrawlSource 数据源适配器，隔离 URL、解析和输出逻辑 | 已实现 |
 | FR-45 | P1 | 提供 Bing、DuckDuckGo、Tavily Web Search 和 Agent 工具 | 已实现 |
 | FR-46 | P1 | 提供 Preset 注册表、system prompt 和插件组合管理 | 已实现 |
+| FR-47 | P1 | 记录 Web Search 工具 trace 并支持 TUI/CLI 查看 | 已实现 |
 
 ## 7. 数据需求
 

@@ -87,6 +87,7 @@ TUI 提供交互式菜单：
 - 离线 Agent 演示
 - 查看最新数据摘要
 - 联网搜索（输入关键词调用 `web_search`）
+- 查看最新 Web Search Trace
 
 TUI 通过子进程调用现有 npm 脚本，不改变数据流程。按 `q` 退出。
 
@@ -96,6 +97,7 @@ TUI 通过子进程调用现有 npm 脚本，不改变数据流程。按 `q` 退
 
 ```bash
 npm run search -- "豆瓣读书 Top250"
+npm run trace
 ```
 
 Provider 选择规则：

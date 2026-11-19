@@ -1,4 +1,4 @@
-import { appendFile, mkdir } from "node:fs/promises";
+import { appendFile, mkdir, readFile, readdir } from "node:fs/promises";
 import path from "node:path";
 
 export interface TraceRecord {
@@ -19,6 +19,24 @@ export class TraceWriter {
       await appendFile(file, JSON.stringify(record) + "\n", "utf8");
     } catch {
       // Tracing must never break the interactive application.
+    }
+  }
+
+  async latestPreview(limit = 20): Promise<{ file: string; lines: string[] } | null> {
+    try {
+      const files = (await readdir(this.directory))
+        .filter((name) => name.endsWith(".jsonl"))
+        .sort();
+      const latest = files.at(-1);
+      if (!latest) return null;
+      const file = path.join(this.directory, latest);
+      const content = await readFile(file, "utf8");
+      return {
+        file,
+        lines: content.split(/\r?\n/).filter(Boolean).slice(0, Math.max(1, limit))
+      };
+    } catch {
+      return null;
     }
   }
 }

@@ -55,6 +55,20 @@ const plugin = createWebSearchPlugin();
 }
 ```
 
+## Trace
+
+Web Search 通过 AppRuntime 记录以下事件：
+
+```text
+websearch/start
+websearch/provider
+websearch/request
+websearch/response
+websearch/error
+```
+
+TUI 按 `7` 或执行 `npm run trace` 可以查看最新 trace 文件前 20 行。
+
 ## 直接调用
 
 ```ts

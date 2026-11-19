@@ -25,6 +25,11 @@ export interface ScriptResult {
   stderr: string;
 }
 
+export interface WebSearchRunResult {
+  response: SearchResponse;
+  trace: string[];
+}
+
 export class AppRuntime {
   readonly config: AppConfig;
   readonly trace: TraceWriter;
@@ -44,23 +49,47 @@ export class AppRuntime {
     }
   }
 
-  async searchWeb(query: string, limit = 3): Promise<SearchResponse> {
+  async searchWeb(query: string, limit = 3): Promise<WebSearchRunResult> {
+    const trace: string[] = [
+      `websearch/start query="${query}" limit=${limit}`,
+      `websearch/provider provider=${this.webSearch.name}`
+    ];
     await this.trace.record("websearch/start", { query, limit });
+    await this.trace.record("websearch/provider", { provider: this.webSearch.name });
+    const startedAt = Date.now();
+
     try {
+      trace.push(`websearch/request query="${query}" limit=${limit}`);
+      await this.trace.record("websearch/request", { query, limit });
       const response = await this.webSearch.search(query, { limit });
-      await this.trace.record("websearch/end", {
+      const durationMs = Date.now() - startedAt;
+      trace.push(
+        `websearch/response provider=${response.provider} results=${response.results.length} durationMs=${durationMs}`
+      );
+      response.results.forEach((result, index) => {
+        trace.push(`websearch/result #${index + 1} ${result.title}`);
+      });
+      await this.trace.record("websearch/response", {
         query,
         provider: response.provider,
-        results: response.results.length
+        results: response.results.length,
+        durationMs
       });
-      return response;
+      return { response, trace };
     } catch (error) {
+      const durationMs = Date.now() - startedAt;
+      trace.push(`websearch/error durationMs=${durationMs}`);
       await this.trace.record("websearch/error", {
         query,
+        durationMs,
         message: error instanceof Error ? error.message : String(error)
       });
       throw error;
     }
+  }
+
+  async latestTrace(limit = 20): Promise<{ file: string; lines: string[] } | null> {
+    return this.trace.latestPreview(limit);
   }
 
   async runScript(script: string): Promise<ScriptResult> {

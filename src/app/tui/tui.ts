@@ -7,7 +7,7 @@ interface MenuItem {
   label: string;
   description: string;
   script?: string;
-  action?: "websearch";
+  action?: "websearch" | "trace";
 }
 
 const MENU: MenuItem[] = [
@@ -16,7 +16,8 @@ const MENU: MenuItem[] = [
   { key: "3", label: "完整流水线", description: "抓取 + 清洗 + 高级分析 + 看板", script: "pipeline" },
   { key: "4", label: "Agent 演示", description: "运行离线爬虫 Agent，不需要 API Key", script: "agent:demo" },
   { key: "5", label: "查看摘要", description: "读取 analysis/summary.json", script: undefined },
-  { key: "6", label: "联网搜索", description: "输入关键词并调用 web_search", action: "websearch" }
+  { key: "6", label: "联网搜索", description: "输入关键词并调用 web_search", action: "websearch" },
+  { key: "7", label: "查看 Trace", description: "显示最新 trace 文件前 20 行", action: "trace" }
 ];
 
 const ANSI = {
@@ -114,7 +115,7 @@ export class Tui {
       out.push(`${ANSI.dim}  Enter 搜索 · Esc 返回菜单${ANSI.reset}`);
     } else if (this.lastOutput.length > 0) {
       out.push(`${ANSI.bold}  最近输出${ANSI.reset}`);
-      for (const row of this.lastOutput.slice(-10)) out.push(`  ${row.slice(0, width - 4)}`);
+      for (const row of this.lastOutput.slice(0, 18)) out.push(`  ${row.slice(0, width - 4)}`);
     }
     out.push(`${ANSI.dim}  提示: 按 6 输入关键词执行 web_search。${ANSI.reset}`);
     process.stdout.write(out.join("\n") + "\n");
@@ -142,6 +143,10 @@ export class Tui {
       this.status = "等待输入搜索关键词";
       this.lastOutput = [];
       this.render();
+      return;
+    }
+    if (item.action === "trace") {
+      await this.showTrace();
       return;
     }
     if (!item.script) {
@@ -177,6 +182,18 @@ export class Tui {
     }
   }
 
+  private async showTrace(): Promise<void> {
+    const latest = await this.runtime.latestTrace(20);
+    if (!latest) {
+      this.lastOutput = ["暂无 trace 文件"];
+      this.status = "Trace 为空";
+    } else {
+      this.lastOutput = [`文件: ${latest.file}`, ...latest.lines];
+      this.status = `已加载最新 Trace: ${latest.lines.length} 行`;
+    }
+    this.render();
+  }
+
   private async runWebSearch(query: string): Promise<void> {
     this.mode = "menu";
     this.busy = true;
@@ -185,8 +202,8 @@ export class Tui {
     this.render();
 
     try {
-      const response = await this.runtime.searchWeb(query, 3);
-      const lines = [`[${response.provider}] ${response.query}`];
+      const { response, trace } = await this.runtime.searchWeb(query, 3);
+      const lines = ["工具 trace:", ...trace.map((line) => `  ${line}`), "", `[${response.provider}] ${response.query}`];
       if (response.answer) lines.push(`回答: ${response.answer}`);
       response.results.forEach((result, index) => {
         lines.push(`${index + 1}. ${result.title}`);
