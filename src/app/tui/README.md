@@ -1,31 +1,43 @@
 # src/app/tui
 
-这是项目的终端 UI（TUI）实现目录。
+这是项目的聊天式终端 UI（TUI）。
 
 ```bash
 npm run tui
 ```
 
-TUI 提供：
-
-- 抓取 Top250
-- 清洗与分析
-- 完整流水线
-- 离线 Agent 演示
-- 查看最新数据摘要
-- 联网搜索：按 `6` 输入关键词，Enter 执行 `web_search`
-- 查看 Trace：按 `7` 显示最新 trace 文件前 20 行
-
-目录结构：
+界面结构：
 
 ```text
-src/app/tui/
-├── index.ts     # 导出 Tui，不直接启动
-├── tui.ts       # 界面、键盘输入和交互状态
-├── README.md    # 使用说明
-└── tui.md       # 模块设计说明
+DOUBAN AGENT  provider/model · 状态 · 待处理数
+/help 帮助 · Esc 清空输入 · Ctrl+C 取消或退出
+────────────────────────────────────────────
+会话记录、工具 trace、Agent 回复
+────────────────────────────────────────────
+> 输入框
+session: 最近一次 Agent JSONL 路径
 ```
 
-实际启动入口是 `src/app/index.ts`。TUI 通过 `AppRuntime` 调用现有 npm 脚本，不直接实现爬虫和清洗逻辑。
+## 输入方式
 
-完整的模块职责、依赖图和扩展说明见 [tui.md](tui.md)。
+- 直接输入任务：使用 `research` Preset 启动 Agent，模型从 `.env` 自动选择。
+- `/help`：显示命令。
+- `/summary`：查看数据摘要。
+- `/search <关键词>`：直接调用 `web_search`。
+- `/trace`：查看最新 trace 文件前 20 行。
+- `/crawl`：抓取 Top250。
+- `/analyze`：清洗、分析和刷新看板。
+- `/pipeline`：抓取 + 分析。
+- `/session`：显示最近一次 Agent 会话路径。
+- `/clear`：清空当前会话记录。
+- `/quit` 或 `Ctrl+C`：退出。
+- `Esc`：清空当前输入。
+
+Agent 运行时，工具调用会实时显示：
+
+```text
+● web_search {"query":"豆瓣读书 Top250","maxResults":3}
+✔ web_search 643 ms
+```
+
+完整模块设计见 [tui.md](tui.md)。

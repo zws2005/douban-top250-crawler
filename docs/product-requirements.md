@@ -161,7 +161,7 @@
 | FR-39 | P0 | 提供模块级最小代码示例 | 已实现，见 `docs/llm/` |
 | FR-40 | P1 | 增加 CI、格式检查和依赖安全扫描 | 后续规划 |
 | FR-41 | P2 | 提供 Docker 镜像和数据库持久化 | 后续规划 |
-| FR-42 | P1 | 提供终端 UI，可触发抓取、分析、流水线和 Agent 演示 | 已实现 |
+| FR-42 | P1 | 提供聊天式终端 UI，支持 Agent、Web Search、Trace 和斜杠命令 | 已实现 |
 | FR-43 | P1 | 提供插件系统、生命周期 Hook 和插件清理 | 已实现 |
 | FR-44 | P1 | 提供 CrawlSource 数据源适配器，隔离 URL、解析和输出逻辑 | 已实现 |
 | FR-45 | P1 | 提供 Bing、DuckDuckGo、Tavily Web Search 和 Agent 工具 | 已实现 |

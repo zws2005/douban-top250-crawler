@@ -2,27 +2,29 @@
 
 ## 1. 模块定位
 
-`src/app/tui` 是本项目的终端交互界面（Terminal UI，TUI）。它不直接实现爬虫、清洗或 Agent 逻辑，而是：
+`src/app/tui` 实现聊天式终端 Agent 控制台。它负责：
 
-1. 展示当前数据摘要。
-2. 提供菜单和键盘操作。
-3. 通过子进程调用现有 npm 脚本。
-4. 在操作完成后刷新摘要和状态。
+1. 显示项目摘要和对话记录。
+2. 接收用户任务和斜杠命令。
+3. 调用 `AppRuntime` 执行 Agent、Web Search 或项目脚本。
+4. 显示模型、工具 trace、最终回复和 Session 路径。
 
-这样 TUI 只是项目的控制面板，不会绕过原有爬虫和分析流程。
+TUI 不直接实现爬虫、模型调用或搜索逻辑。
 
 ## 2. 文件结构
 
 ```text
 src/app/
-├── config.ts     # 环境变量与路径配置
+├── config.ts     # 环境变量与路径
+├── env.ts        # .env 加载
 ├── index.ts      # 应用启动入口
-├── prompt.ts     # Agent 提示词与默认任务
-├── runtime.ts    # 摘要读取和 npm 脚本执行
+├── presets.ts    # crawler / research Preset
+├── prompt.ts     # Agent system prompt
+├── runtime.ts    # Agent、Web Search、脚本和 Trace
 ├── trace.ts      # JSONL 运行追踪
 └── tui/
     ├── index.ts  # 导出 Tui
-    ├── tui.ts    # TUI 主逻辑
+    ├── tui.ts    # 聊天界面与键盘状态机
     ├── README.md # 使用说明
     └── tui.md    # 当前模块说明
 ```
@@ -31,151 +33,132 @@ src/app/
 
 ```mermaid
 graph TD
-  INDEX["app/index.ts<br/>启动入口"] --> RUNTIME["app/runtime.ts"]
-  INDEX --> TUI["tui/tui.ts<br/>Tui 类"]
+  INDEX["app/index.ts"] --> ENV["app/env.ts"]
+  INDEX --> RUNTIME["app/runtime.ts"]
+  INDEX --> TUI["tui/tui.ts"]
   TUI --> RUNTIME
-  RUNTIME --> CONFIG["app/config.ts"]
+  RUNTIME --> PRESET["app/presets.ts"]
+  RUNTIME --> LLM["core/llm"]
+  RUNTIME --> AGENT["core/agent-loop"]
+  RUNTIME --> WEB["core/websearch"]
   RUNTIME --> TRACE["app/trace.ts"]
-  RUNTIME --> WEBSEARCH["core/websearch"]
-  RUNTIME --> CHILD["node:child_process<br/>执行 npm 脚本"]
   RUNTIME --> SUMMARY["analysis/summary.json"]
-  TUI --> READLINE["node:readline<br/>键盘输入"]
-  TUI --> SCRIPTS["package.json scripts<br/>crawl / analyze / pipeline / agent:demo"]
+  TUI --> READLINE["node:readline"]
 ```
-
-依赖方向是单向的：
-
-```text
-app/index.ts → tui/tui.ts → app/runtime.ts
-                         → app/config.ts
-                         → app/trace.ts
-                         → analysis/summary.json
-                         → npm scripts
-```
-
-`tui.ts` 不直接依赖具体爬虫模块、pandas 脚本或 Agent 内部实现。
 
 ## 4. 启动流程
 
 ```text
 npm run tui
-  → tsc 编译
+  → clean dist + tsc
   → node dist/src/app/index.js
+  → loadEnvFile()
   → new AppRuntime()
   → new Tui(runtime).start()
+  → 读取 analysis/summary.json
+  → 渲染聊天界面
 ```
 
-`start()` 会执行：
-
-1. 检查 `process.stdin.isTTY`。
-2. 非 TTY 环境打印静态菜单后退出。
-3. TTY 环境进入备用屏幕、隐藏光标、开启 raw mode。
-4. 监听键盘事件。
-5. 读取 `analysis/summary.json`。
-6. 渲染主界面。
-7. 等待用户选择。
-
-## 5. 界面内容
-
-TUI 首页分为四个区域：
+## 5. 界面
 
 | 区域 | 内容 |
 | --- | --- |
-| 标题栏 | 项目名称和工作目录 |
-| 数据摘要 | 图书数、平均评分、评价人数、最高分书、出版社 |
-| 操作菜单 | 抓取、分析、流水线、Agent 演示、查看摘要、退出 |
-| 状态栏 | 当前状态、最近命令输出 |
+| 顶部状态栏 | `provider/model · 状态 · 待处理数` |
+| 帮助行 | `/help`、Esc、Ctrl+C |
+| 会话区 | 用户消息、工具 trace、Agent 回复、本轮完成 |
+| 输入行 | `> 当前输入█` |
+| 底部状态 | 最近一次 Agent Session JSONL 路径 |
 
-摘要读取失败时，界面会提示先执行清洗分析，不会导致 TUI 崩溃。
+每次按键只更新输入行并重新绘制当前可见会话。
 
-## 6. 键盘与菜单
+## 6. 输入与命令
 
-| 按键 | 动作 |
+普通文本：使用 `research` Preset 启动 Agent。
+
+| 命令 | 动作 |
 | --- | --- |
-| `1` | 执行 `npm run crawl` |
-| `2` | 执行 `npm run analyze` |
-| `3` | 执行 `npm run pipeline` |
-| `4` | 执行 `npm run agent:demo` |
-| `5` | 重新读取并显示摘要 |
-| `6` | 输入关键词并执行 `web_search` |
-| `7` | 查看最新 trace 文件前 20 行 |
-| `Enter` | 在搜索输入模式下执行搜索 |
-| `q` / `Esc` | 退出 TUI；搜索输入模式下 Esc 返回菜单 |
-| `Ctrl+C` | 强制退出 |
+| `/help` | 显示帮助 |
+| `/summary` | 刷新并显示数据摘要 |
+| `/search <关键词>` | 直接执行 Web Search |
+| `/trace` | 显示最新 trace 文件前 20 行 |
+| `/crawl` | 执行 `npm run crawl` |
+| `/analyze` | 执行 `npm run analyze` |
+| `/pipeline` | 执行 `npm run pipeline` |
+| `/session` | 显示最近一次 Agent Session 路径 |
+| `/clear` | 清空会话记录 |
+| `/quit` | 退出 |
 
-操作执行期间，`busy` 状态会阻止重复触发菜单操作；`Ctrl+C` 仍可退出。
+`Esc` 清空当前输入，`Ctrl+C` 退出。
 
-## 7. 状态模型
-
-`Tui` 类保存以下状态：
-
-```ts
-summary: Summary | null      // 当前摘要
-status: string               // 状态栏文本
-busy: boolean                // 是否有命令正在执行
-lastOutput: string[]         // 最近命令输出
-closed: boolean              // 是否已经退出
-```
-
-状态变化后统一调用 `render()` 重绘界面。
-
-## 8. 命令执行流程
+## 7. Agent 执行流程
 
 ```text
-用户按键
-  → onKey()
-  → 找到 MENU 项
-  → runtime.runScript(script)
-  → trace/start
-  → execFile("npm", ["run", script])
-  → trace/end 或 trace/error
-  → 保存 stdout/stderr 最后若干行
-  → refreshSummary()
-  → render()
+用户输入
+  → Tui.runAgent()
+  → AppRuntime.runAgent()
+  → selectProvider() 读取 .env 或环境变量
+  → getAppPresetRegistry().get("research")
+  → AgentLoop(provider, tools, preset.plugins, preset.systemPrompt)
+  → tool/call / tool/result 事件
+  → Tui 实时追加工具 trace
+  → 最终回复
+  → 本轮完成
 ```
 
-命令通过 `AppRuntime` 使用 `execFile` 执行，菜单脚本名来自固定 `MENU` 常量，避免接受任意用户命令。运行追踪写入 `data/app-traces/`。
+状态栏会从 `provider: auto` 更新为实际的 `bailian/qwen-plus`、`deepseek/deepseek-chat` 或 `demo/demo`。
 
-## 9. 退出与清理
+## 8. Web Search 与 Trace
 
-退出时会：
+Web Search 支持：
 
-- 关闭 raw mode。
-- 显示光标。
-- 退出备用屏幕。
-- 恢复标准终端输出。
+- Bing（默认，无需 Key）
+- DuckDuckGo
+- Tavily（`TAVILY_API_KEY`）
 
-这样不会把终端留在隐藏光标或全屏状态。
+Web Search trace 记录：
 
-## 10. 扩展方式
+```text
+websearch/start
+websearch/provider
+websearch/request
+websearch/response
+websearch/result
+websearch/error
+```
 
-新增菜单项时：
+`/search` 会在会话区显示工具 trace 和结果；`/trace` 显示最新 JSONL trace 文件前 20 行。
 
-1. 在 `MENU` 中添加 `{ key, label, description, script }`。
-2. 确保对应的 npm script 已存在。
-3. 如果需要展示新数据，扩展 `Summary` 和 `readSummary()`。
-4. 更新 `README.md` 和本文件。
-
-示例：
+## 9. 状态模型
 
 ```ts
-{
-  key: "6",
-  label: "刷新看板",
-  description: "重新生成 dashboard/index.html",
-  script: "dashboard"
-}
+summary: AnalysisSummary | null
+transcript: string[]
+input: string
+status: string
+busy: boolean
+closed: boolean
+providerLabel: string
+sessionPath: string
 ```
+
+## 10. 退出与清理
+
+退出时：
+
+- 关闭 raw mode
+- 暂停 stdin
+- 显示光标
+- 退出备用屏幕
+- 恢复终端
 
 ## 11. 设计边界
 
 当前 TUI 不包含：
 
-- 实时日志流。
-- 鼠标交互。
-- 多窗口布局。
-- 后台任务队列。
-- 命令取消和强制终止。
-- 远程控制。
+- 流式模型 token 输出
+- 多窗口或鼠标交互
+- 命令历史持久化
+- Agent 任务取消（仅 Ctrl+C 退出）
+- 多 Session 切换
 
-这些能力可以在后续通过事件总线、子进程管理和更完整的 TUI 框架实现。
+这些能力可以在现有 `AppRuntime` 和 Session 基础上继续扩展。

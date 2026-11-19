@@ -79,17 +79,28 @@ npm run crawl -- --help
 npm run tui
 ```
 
-TUI 提供交互式菜单：
+TUI 采用聊天式交互：
 
-- 抓取 Top250
-- 清洗与分析
-- 完整 pipeline
-- 离线 Agent 演示
-- 查看最新数据摘要
-- 联网搜索（输入关键词调用 `web_search`）
-- 查看最新 Web Search Trace
+- 直接输入任务，使用 `.env` 中的模型执行 research Agent
+- 实时显示 `web_search` 等工具调用 trace
+- 显示最终回复、模型和 Session 路径
+- `/search <关键词>` 直接搜索
+- `/trace` 查看最新 trace 前 20 行
+- `/summary`、`/crawl`、`/analyze`、`/pipeline` 等斜杠命令
+- `Esc` 清空输入，`Ctrl+C` 或 `/quit` 退出
 
-TUI 通过子进程调用现有 npm 脚本，不改变数据流程。按 `q` 退出。
+```
+DOUBAN AGENT  bailian/qwen-plus · 就绪 · 待处理 0
+/help 帮助 · Esc 清空输入 · Ctrl+C 取消或退出
+────────────────────────────────────────────
+● web_search {"query":"豆瓣读书 Top250"}
+✔ web_search 643 ms
+...
+本轮完成
+────────────────────────────────────────────
+> 
+session: data/agent-sessions/<id>.jsonl
+```
 
 ## Web Search
 
